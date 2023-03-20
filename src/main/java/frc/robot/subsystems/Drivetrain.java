@@ -6,7 +6,7 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.CHASSIS;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.DoubleSupplier;
@@ -17,10 +17,10 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
 public class Drivetrain extends SubsystemBase {
 
-  private final CANSparkMax frontLeftMotor = new CANSparkMax(DriveConstants.FRONT_LEFT_ID, MotorType.kBrushless);
-  private final CANSparkMax frontRightMotor = new CANSparkMax(DriveConstants.FRONT_RIGHT_ID, MotorType.kBrushless);
-  private final CANSparkMax backLeftMotor = new CANSparkMax(DriveConstants.BACK_LEFT_ID, MotorType.kBrushless);
-  private final CANSparkMax backRightMotor = new CANSparkMax(DriveConstants.BACK_RIGHT_ID, MotorType.kBrushless);
+  private final CANSparkMax frontLeftMotor = new CANSparkMax(CHASSIS.FRONT_LEFT_ID, MotorType.kBrushless);
+  private final CANSparkMax frontRightMotor = new CANSparkMax(CHASSIS.FRONT_RIGHT_ID, MotorType.kBrushless);
+  private final CANSparkMax backLeftMotor = new CANSparkMax(CHASSIS.BACK_LEFT_ID, MotorType.kBrushless);
+  private final CANSparkMax backRightMotor = new CANSparkMax(CHASSIS.BACK_RIGHT_ID, MotorType.kBrushless);
 
   // The robot's drive
   private final DifferentialDrive m_drive = new DifferentialDrive(frontLeftMotor, frontRightMotor);
@@ -60,8 +60,8 @@ public class Drivetrain extends SubsystemBase {
     // A split-stick arcade command, with forward/backward controlled by the left
     // hand, and turning controlled by the right.
     return run(() -> {
-      double multiplier = (DriveConstants.DEFAULT_OUTPUT + (max.getAsDouble() * DriveConstants.OUTPUT_INTERVAL)
-          - (min.getAsDouble() * DriveConstants.OUTPUT_INTERVAL));
+      double multiplier = (CHASSIS.DEFAULT_OUTPUT + (max.getAsDouble() * CHASSIS.OUTPUT_INTERVAL)
+          - (min.getAsDouble() * CHASSIS.OUTPUT_INTERVAL));
       m_drive.arcadeDrive(
           fwd.getAsDouble() * multiplier, rot.getAsDouble() * multiplier);
       SmartDashboard.putNumber("Max Drive Speed %", multiplier * 100);

@@ -4,7 +4,7 @@
 
 package frc.robot;
 
-import frc.robot.Constants.OIConstants;
+import frc.robot.Constants.PERIPHERALS;
 import frc.robot.subsystems.Drivetrain;
 
 import com.revrobotics.CANSparkMax.IdleMode;
@@ -26,7 +26,7 @@ public class RobotContainer {
   private final Drivetrain drivetrain = new Drivetrain();
 
   // The driver's controller
-  CommandXboxController driverController = new CommandXboxController(OIConstants.DRIVER_PORT);
+  CommandXboxController driverController = new CommandXboxController(PERIPHERALS.DRIVER_PORT);
 
   /**
    * Use this method to define bindings between conditions and commands. These are
