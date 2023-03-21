@@ -22,11 +22,15 @@ public final class Autos {
         // Reset encoders on command start
         drive::resetEncoders,
         // Drive forward while the command is executing
-        () -> drive.setPosition(-110, -110),
+        () -> {
+          // drive.setPosition(-110, -110);
+          drive.setIdleMode(IdleMode.kBrake);
+          drive.setOutput(-0.4, -0.4);
+        },
         // Stop driving at the end of the command
-        interrupt -> drive.emergencyStop().alongWith(drive.setIdleMode(IdleMode.kBrake)),
+        interrupt -> drive.setOutput(0, 0),
         // End the command when the robot's driven distance exceeds the desired value
-        () -> drive.getLeftPosition() <= -110,
+        () -> drive.getAveragePosition() <= -110,
         // Require the drive subsystem
         drive);
   }
