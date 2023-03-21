@@ -123,6 +123,11 @@ public class Drivetrain extends SubsystemBase {
         .withInterruptBehavior(InterruptionBehavior.kCancelSelf).withName("arcadeDrive");
   }
 
+  public void setOutput(double left, double right) {
+    this.frontLeftMotor.set(left);
+    this.frontRightMotor.set(right);
+  }
+
   /**
    * Sets drivetrain position in inches
    * 
