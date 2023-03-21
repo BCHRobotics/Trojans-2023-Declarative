@@ -15,7 +15,6 @@ import com.revrobotics.CANSparkMax.IdleMode;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
@@ -48,14 +47,18 @@ public class RobotContainer {
   SendableChooser<Command> autoChooser = new SendableChooser<>();
 
   public RobotContainer() {
-    configureBindings();
-
     // Set default commands
     // Control the drive with split-stick arcade controls
     drivetrain.setDefaultCommand(
         drivetrain.arcadeDriveCommand(
             () -> -driverController.getLeftY(), () -> -driverController.getRightX(),
-            () -> driverController.getLeftTriggerAxis(), () -> driverController.getRightTriggerAxis()));
+            () -> driverController.getLeftTriggerAxis(), () -> driverController.getRightTriggerAxis())
+            .beforeStarting(() -> {
+              drivetrain.setRampRate(true);
+              drivetrain.setIdleMode(IdleMode.kBrake);
+            }));
+
+    configureBindings();
 
     // Add commands to the autonomous command chooser
     autoChooser.setDefaultOption("Simple Auto", simpleAuto);
@@ -77,18 +80,19 @@ public class RobotContainer {
    */
   public void configureBindings() {
 
-    driverController.rightBumper().whileTrue(drivetrain.setBrakeMode(IdleMode.kBrake))
-        .whileFalse(drivetrain.setBrakeMode(IdleMode.kCoast));
-
-    driverController.leftBumper()
-        .whileTrue(drivetrain.emergencyBrake().withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+    driverController.rightBumper().or(driverController.leftBumper().or(driverController.y()))
+        .whileTrue(drivetrain.setIdleMode(IdleMode.kBrake))
+        .whileFalse(drivetrain.setIdleMode(IdleMode.kCoast));
 
     driverController.y().whileTrue(drivetrain.balance());
 
+    driverController.leftBumper().whileTrue(drivetrain.emergencyStop())
+        .onFalse(drivetrain.setIdleMode(IdleMode.kCoast));
+
     operatorController.povUp().onTrue(mechanism.setArmPreset(MECHANISM.TOP));
     operatorController.povLeft().onTrue(mechanism.setArmPreset(MECHANISM.MID));
-    operatorController.povRight().onTrue(mechanism.setArmPreset(MECHANISM.GROUND));
-    operatorController.povDown().onTrue(mechanism.setArmPreset(MECHANISM.TRANSPORT));
+    operatorController.povRight().onTrue(mechanism.setArmPreset(MECHANISM.TRANSPORT));
+    operatorController.povDown().onTrue(mechanism.setArmPreset(MECHANISM.GROUND));
     operatorController.rightStick().onTrue(mechanism.setArmPreset(MECHANISM.STATION));
     operatorController.leftStick().onTrue(mechanism.setArmPreset(MECHANISM.DEFAULT));
   }

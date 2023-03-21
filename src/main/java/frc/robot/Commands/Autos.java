@@ -4,6 +4,8 @@
 
 package frc.robot.Commands;
 
+import com.revrobotics.CANSparkMax.IdleMode;
+
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
@@ -22,7 +24,7 @@ public final class Autos {
         // Drive forward while the command is executing
         () -> drive.setPosition(-110, -110),
         // Stop driving at the end of the command
-        interrupt -> drive.emergencyBrake(),
+        interrupt -> drive.emergencyStop().alongWith(drive.setIdleMode(IdleMode.kBrake)),
         // End the command when the robot's driven distance exceeds the desired value
         () -> drive.getLeftPosition() <= -110,
         // Require the drive subsystem
@@ -42,7 +44,7 @@ public final class Autos {
             // Drive forward while the command is executing
             () -> drive.setPosition(-110, -110),
             // Stop driving at the end of the command
-            interrupt -> drive.emergencyBrake(),
+            interrupt -> drive.emergencyStop().alongWith(drive.setIdleMode(IdleMode.kBrake)),
             // End the command when the robot's driven distance exceeds the desired value
             () -> drive.getAveragePosition() <= -110,
             // Require the drive subsystem

@@ -48,8 +48,8 @@ public class Mechanism extends SubsystemBase {
     this.shoulderEncoder.setInverted(MECHANISM.SHOULDER_ENCODER_INVERTED);
     this.wristEncoder.setInverted(MECHANISM.WRIST_ENCODER_INVERTED);
 
-    this.shoulderEncoder.setPositionConversionFactor(0);
-    this.wristEncoder.setPositionConversionFactor(0);
+    this.shoulderEncoder.setPositionConversionFactor(MECHANISM.SHOULDER_CONVERSION_FACTOR);
+    this.wristEncoder.setPositionConversionFactor(MECHANISM.WRIST_CONVERSION_FACTOR);
 
     this.shoulderEncoder.setZeroOffset(MECHANISM.SHOULDER_ENCODER_OFFSET);
     this.wristEncoder.setZeroOffset(MECHANISM.WRIST_ENCODER_OFFSET);
