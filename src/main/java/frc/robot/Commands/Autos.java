@@ -24,11 +24,11 @@ public final class Autos {
         // Drive forward while the command is executing
         () -> drive.setPosition(-110, -110),
         // Stop driving at the end of the command
-        interrupt -> drive.emergencyStop().alongWith(drive.setIdleMode(IdleMode.kBrake)),
+        interrupt -> drive.emergencyStop(),
         // End the command when the robot's driven distance exceeds the desired value
         () -> drive.getLeftPosition() <= -110,
         // Require the drive subsystem
-        drive);
+        drive).alongWith(drive.setIdleMode(IdleMode.kBrake));
   }
 
   /**
