@@ -4,7 +4,9 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj.SerialPort;
 import frc.robot.util.control.ArmPresets;
+import frc.robot.util.control.PIDConstants;
 import frc.robot.util.control.SparkMaxConstants;
 
 /**
@@ -26,8 +28,46 @@ public final class Constants {
     public static final int BACK_LEFT_ID = 12;
     public static final int BACK_RIGHT_ID = 13;
 
+    // Drivetrain restrictions
     public static final double DEFAULT_OUTPUT = 0.75;
     public static final double OUTPUT_INTERVAL = 0.25;
+    public static final double RAMP_RATE = 0.15; // s
+    public static final double TOLERANCE = 1; // in
+    public static final boolean INVERTED = false;
+
+    // Chassis dimensions needed
+    public static final double WHEEL_DIAMETER = 6;
+    public static final double TRACK_WIDTH = 19;
+
+    // Chasis conversion factors TODO: Re-collect conversion data
+    public static final double LEFT_POSITION_CONVERSION = 48 / 18.23804473876953; // inches per
+    // revolutions
+    public static final double RIGHT_POSITION_CONVERSION = 48 / 18.14280891418457; // #inches / #revs
+
+    public static final double LEFT_VELOCITY_CONVERSION = LEFT_POSITION_CONVERSION / 60.0; // inches per
+                                                                                           // second
+    public static final double RIGHT_VELOCITY_CONVERSION = RIGHT_POSITION_CONVERSION / 60.0; // #inches /
+                                                                                             // 1 sec
+
+    // input diameter = Δd inches between center wheels ~~v~~ in inches / degree
+    public static final double TURNING_CONVERSION = (TRACK_WIDTH * Math.PI) / 360;
+
+    // Drive PID Constants TODO: Re-tune Drivetrain PID
+    public static final SparkMaxConstants LEFT_DRIVE_CONSTANTS = new SparkMaxConstants(
+        0.00012, 0, 0.0025, 0, 0.00005, -1, 1, 0, 0, 6000, 2000, 0.2);
+    public static final SparkMaxConstants RIGHT_DRIVE_CONSTANTS = new SparkMaxConstants(
+        0.00012, 0, 0.0025, 0, 0.00005, -1, 1, 0, 0, 6000, 2000, 0.2);
+
+    // Gyro constants
+    public static final SerialPort.Port GYRO_PORT = SerialPort.Port.kMXP;
+    public static final boolean GYRO_OUTPUT_INVERTED = false;
+    public static final double GYRO_TOLERANCE = 0.8;
+
+    // Gyro PID Constants TODO: Re-tune gyro
+    public static final PIDConstants GYRO_CONSTANTS = new PIDConstants(0.007, 0.001, 0, 0);
+
+    // Target seek PID Constants TODO: Tune seeking constants
+    public static final PIDConstants SEEK_CONSTANTS = new PIDConstants(0.00012, 0, 0.0025, 0.00005);
   }
 
   public static final class MECHANISM {
@@ -82,6 +122,8 @@ public final class Constants {
 
   public static final class PERIPHERALS {
     public static final int DRIVER_PORT = 0;
+    public static final int OPERATOR_PORT = 1;
+    public static final double CONTROLLER_DEADBAND = 0.1;
   }
 
   public static final class MISC {

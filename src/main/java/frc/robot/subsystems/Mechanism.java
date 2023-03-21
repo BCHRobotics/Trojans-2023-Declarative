@@ -14,22 +14,19 @@ import com.revrobotics.SparkMaxPIDController.AccelStrategy;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.MECHANISM;
+import frc.robot.Constants.MISC;
 import frc.robot.util.control.ArmPresets;
 import frc.robot.util.control.SparkMaxPID;
 
 public class Mechanism extends SubsystemBase {
-  private final CANSparkMax shoulderMotor = new CANSparkMax(0, MotorType.kBrushless);
-  private final CANSparkMax wristMotor = new CANSparkMax(0, MotorType.kBrushless);
+  private final CANSparkMax shoulderMotor = new CANSparkMax(MECHANISM.SHOULDER_ID, MotorType.kBrushless);
+  private final CANSparkMax wristMotor = new CANSparkMax(MECHANISM.WRIST_ID, MotorType.kBrushless);
 
   private final SparkMaxAbsoluteEncoder shoulderEncoder;
   private final SparkMaxAbsoluteEncoder wristEncoder;
 
   private final SparkMaxPID shoulderController;
   private final SparkMaxPID wristController;
-
-  private double endEffectorHeight;
-  private double shoulderOffset;
-  private double wristOffset = MECHANISM.WRIST_DEFAULT_OFFSET;
 
   /** Creates a new Mechanism. */
   public Mechanism() {
@@ -82,10 +79,20 @@ public class Mechanism extends SubsystemBase {
     this.wristController.setMotionProfileType(AccelStrategy.kSCurve);
   }
 
+  /**
+   * Set robot arm to desired preset position
+   * 
+   * @param preset
+   */
   public CommandBase setArmPreset(ArmPresets preset) {
-    // A split-stick arcade command, with forward/backward controlled by the left
-    // hand, and turning controlled by the right.
     return run(() -> {
+      this.setShoulderAngle(Math.toDegrees(
+          Math.acos((MECHANISM.SHOULDER_HEIGHT - MECHANISM.WRIST_HEIGHT_OFFSET - preset.wristHeight)
+              / MECHANISM.ARM_LENGTH)));
+      this.setWristAngle(Math.toDegrees(
+          Math.acos((MECHANISM.SHOULDER_HEIGHT - MECHANISM.WRIST_HEIGHT_OFFSET - preset.wristHeight)
+              / MECHANISM.ARM_LENGTH))
+          + MECHANISM.WRIST_PARALLEL_OFFSET + preset.wristOffset);
     }).withName("setArmPreset");
   }
 
@@ -95,6 +102,9 @@ public class Mechanism extends SubsystemBase {
    * @param angle
    */
   private void setShoulderAngle(double angle) {
+    if (MISC.WITHIN_TOLERANCE(this.getShoulderPosition(), angle, MECHANISM.SHOULDER_TOLERANCE))
+      return;
+
     this.shoulderController.setSmartPosition(angle, MECHANISM.SHOULDER_DEFAULT_OFFSET, MECHANISM.SHOULDER_LIMIT);
   }
 
@@ -104,31 +114,18 @@ public class Mechanism extends SubsystemBase {
    * @param angle
    */
   private void setWristAngle(double angle) {
-    double normalizedAngle = (this.shoulderEncoder.getPosition() - MECHANISM.SHOULDER_DEFAULT_OFFSET)
-        / (MECHANISM.SHOUDLER_MAX_EXTENSION_LIMIT - MECHANISM.SHOULDER_DEFAULT_OFFSET);
-    double smoothedLimit = (normalizedAngle) * (MECHANISM.WRIST_LIMIT - MECHANISM.WRIST_PARALLEL_OFFSET)
-        + MECHANISM.WRIST_PARALLEL_OFFSET + MECHANISM.WRIST_DEFAULT_OFFSET;
     this.wristController.setSmartPosition(angle, MECHANISM.WRIST_DEFAULT_OFFSET,
         this.getShoulderPosition() < MECHANISM.SHOUDLER_MAX_EXTENSION_LIMIT
-            ? (smoothedLimit)
+            ? ((this.shoulderEncoder.getPosition() - MECHANISM.SHOULDER_DEFAULT_OFFSET)
+                / (MECHANISM.SHOUDLER_MAX_EXTENSION_LIMIT - MECHANISM.SHOULDER_DEFAULT_OFFSET)
+                * (MECHANISM.WRIST_LIMIT - MECHANISM.WRIST_PARALLEL_OFFSET)
+                + MECHANISM.WRIST_PARALLEL_OFFSET + MECHANISM.WRIST_DEFAULT_OFFSET)
             : MECHANISM.WRIST_LIMIT);
 
   }
 
   /**
-   * Sets end effector height in inches
-   * 
-   * @param position
-   */
-  private void setWristHeight(double height) {
-    this.endEffectorHeight = height + this.shoulderOffset;
-    this.armAngle = Math.toDegrees(
-        Math.acos((Arm.SHOULDER_HEIGHT - Arm.WRIST_HEIGHT_OFFSET - this.endEffectorHeight) / Arm.ARM_LENGTH));
-    this.wristAngle = this.armAngle + Arm.WRIST_PARALLEL_OFFSET;
-  }
-
-  /**
-   * Gets shoulder absolute encoder object position value
+   * Gets shoulder absolute encoder position value
    * 
    * @return Shoulder Position
    */
@@ -137,7 +134,7 @@ public class Mechanism extends SubsystemBase {
   }
 
   /**
-   * Gets wrist absolute encoder object position value
+   * Gets wrist absolute encoder position value
    * 
    * @return Wrist Position
    */
