@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.wpilibj.SerialPort;
 import frc.robot.util.control.ArmPresets;
 import frc.robot.util.control.PIDConstants;
@@ -68,6 +69,8 @@ public final class Constants {
 
     // Target seek PID Constants TODO: Tune seeking constants
     public static final PIDConstants SEEK_CONSTANTS = new PIDConstants(0.00012, 0, 0.0025, 0.00005);
+
+    public static final DifferentialDriveKinematics driveKinematics = new DifferentialDriveKinematics(TRACK_WIDTH / 39.37); // inches to metres;
   }
 
   public static final class MECHANISM {

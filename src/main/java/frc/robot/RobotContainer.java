@@ -5,6 +5,7 @@
 package frc.robot;
 
 import frc.robot.Commands.Autos;
+import frc.robot.Constants.CHASSIS;
 import frc.robot.Constants.MECHANISM;
 import frc.robot.Constants.PERIPHERALS;
 import frc.robot.subsystems.Drivetrain;
@@ -12,11 +13,19 @@ import frc.robot.subsystems.Mechanism;
 
 import com.revrobotics.CANSparkMax.IdleMode;
 
+import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import com.pathplanner.lib.PathConstraints;
+import com.pathplanner.lib.PathPlanner;
+import com.pathplanner.lib.auto.RamseteAutoBuilder;
 
 /**
  * This class is where the bulk of the robot should be declared. Since
@@ -43,6 +52,9 @@ public class RobotContainer {
   // A complex auto routine that drives backwards, then balances the robot
   private final Command complexAuto = Autos.complexAuto(drivetrain);
 
+  // Pathplanner's auto path generator && Map of locations to commands;
+  private final RamseteAutoBuilder autoBuilder;
+  private final Map<String, Command> autoMap = new HashMap<>();
   // A chooser for autonomous commands
   SendableChooser<Command> autoChooser = new SendableChooser<>();
 
@@ -60,11 +72,16 @@ public class RobotContainer {
 
     configureBindings();
 
+    // Initialize PathPlanner generator
+    autoBuilder = new RamseteAutoBuilder(drivetrain::getPose, drivetrain::resetPose, new RamseteController(), CHASSIS.driveKinematics, drivetrain::tankDriveVolts, autoMap, drivetrain);
+    
     // Add commands to the autonomous command chooser
     autoChooser.setDefaultOption("Simple Auto", simpleAuto);
     autoChooser.addOption("Complex Auto", complexAuto);
 
-    SmartDashboard.putData("Autonomous Route", autoChooser);
+    autoChooser.addOption("PathPlanner Auto", complexAuto);
+
+    SmartDashboard.putData("Autonomous Route", autoBuilder.fullAuto(PathPlanner.loadPath("Circle", new PathConstraints(3, 1.5))));
   }
 
   /**

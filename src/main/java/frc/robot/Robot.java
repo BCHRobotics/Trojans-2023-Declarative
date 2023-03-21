@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import com.pathplanner.lib.server.PathPlannerServer;
+
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -29,6 +31,9 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
+    // Initialize PathPlanner server
+    PathPlannerServer.startServer(5811);
+
     // Configure default commands and condition bindings on robot startup
     robotContainer = new RobotContainer();
   }

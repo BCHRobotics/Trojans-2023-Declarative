@@ -4,6 +4,9 @@
 
 package frc.robot.subsystems;
 
+import edu.wpi.first.math.controller.RamseteController;
+import edu.wpi.first.math.estimator.DifferentialDrivePoseEstimator;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.CHASSIS;
@@ -12,11 +15,15 @@ import frc.robot.Constants.PERIPHERALS;
 import frc.robot.util.Gyro;
 import frc.robot.util.control.PID;
 import frc.robot.util.control.SparkMaxPID;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 
 import java.util.function.DoubleSupplier;
+
+import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.commands.PPRamseteCommand;
 
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
@@ -47,6 +54,11 @@ public class Drivetrain extends SubsystemBase {
   // Objects for gyroscope sensor fusion and balancing
   private Gyro gyro;
   private PID gyroPid;
+
+  // Pose Estimator
+  private DifferentialDrivePoseEstimator estimator;
+
+  // Motor Controller group ( Necessary for command based robots )
 
   /** Creates a new Drive subsystem. */
   public Drivetrain() {
@@ -80,11 +92,11 @@ public class Drivetrain extends SubsystemBase {
     this.leftEncoder = this.frontLeftMotor.getEncoder();
     this.righEncoder = this.frontRightMotor.getEncoder();
 
-    this.leftEncoder.setPositionConversionFactor(CHASSIS.LEFT_POSITION_CONVERSION);
-    this.righEncoder.setPositionConversionFactor(CHASSIS.RIGHT_POSITION_CONVERSION);
+    this.leftEncoder.setPositionConversionFactor(CHASSIS.LEFT_POSITION_CONVERSION / 39.37);
+    this.righEncoder.setPositionConversionFactor(CHASSIS.RIGHT_POSITION_CONVERSION / 39.37);
 
-    this.leftEncoder.setVelocityConversionFactor(CHASSIS.LEFT_VELOCITY_CONVERSION);
-    this.righEncoder.setVelocityConversionFactor(CHASSIS.RIGHT_VELOCITY_CONVERSION);
+    this.leftEncoder.setVelocityConversionFactor(CHASSIS.LEFT_VELOCITY_CONVERSION / 39.37);
+    this.righEncoder.setVelocityConversionFactor(CHASSIS.RIGHT_VELOCITY_CONVERSION / 39.37);
 
     this.leftMotorController = new SparkMaxPID(this.frontLeftMotor, CHASSIS.LEFT_DRIVE_CONSTANTS);
     this.rightMotorController = new SparkMaxPID(this.frontRightMotor, CHASSIS.RIGHT_DRIVE_CONSTANTS);
@@ -101,6 +113,7 @@ public class Drivetrain extends SubsystemBase {
     this.gyro = new Gyro(CHASSIS.GYRO_PORT);
     this.gyroPid = new PID(CHASSIS.GYRO_CONSTANTS);
 
+    this.estimator = new DifferentialDrivePoseEstimator(CHASSIS.driveKinematics, gyro.getRotation2d() , getLeftPosition(), getRightPosition(), new Pose2d());
   }
 
   /**
@@ -203,7 +216,7 @@ public class Drivetrain extends SubsystemBase {
   }
 
   /**
-   * Returns the drivetrain's left encoder position in inches
+   * Returns the drivetrain's left encoder position in metres
    * 
    * @return Left Position
    */
@@ -212,7 +225,7 @@ public class Drivetrain extends SubsystemBase {
   }
 
   /**
-   * Returns the drivetrain's right encoder position in inches
+   * Returns the drivetrain's right encoder position in metres
    * 
    * @return Right Position
    */
@@ -221,7 +234,7 @@ public class Drivetrain extends SubsystemBase {
   }
 
   /**
-   * Returns the drivetrain's average encoder position in inches
+   * Returns the drivetrain's average encoder position in metres
    * 
    * @return Average Position
    */
@@ -230,7 +243,7 @@ public class Drivetrain extends SubsystemBase {
   }
 
   /**
-   * Returns the drivetrain's left encoder velocity in inches / second
+   * Returns the drivetrain's left encoder velocity in metres / second
    * 
    * @return Left Velocity
    */
@@ -239,7 +252,7 @@ public class Drivetrain extends SubsystemBase {
   }
 
   /**
-   * Returns the drivetrain's left encoder velocity in inches / second
+   * Returns the drivetrain's left encoder velocity in metres / second
    * 
    * @return Left Velocity
    */
@@ -248,7 +261,7 @@ public class Drivetrain extends SubsystemBase {
   }
 
   /**
-   * Returns the drivetrain's average encoder velocty in inches / second
+   * Returns the drivetrain's average encoder velocty in metres / second
    * 
    * @return Average Velocity
    */
@@ -274,8 +287,41 @@ public class Drivetrain extends SubsystemBase {
     this.backRightMotor.burnFlash();
   }
 
+  /**
+   * Returns estimated position
+   */
+  public Pose2d getPose() {
+    return estimator.getEstimatedPosition();
+  }
+
+  /**
+   * Resets estimated position
+   */
+  public void resetPose(Pose2d pose) {
+    estimator.resetPosition(gyro.getRotation2d(), getLeftPosition(), getRightPosition(), pose);
+  }
+
+  /**
+   * Controls the left and right sides of the drive directly with voltages.
+   *
+   * @param leftVolts the commanded left output
+   * @param rightVolts the commanded right output
+   */
+  public void tankDriveVolts(double leftVolts, double rightVolts) {
+    frontLeftMotor.setVoltage(leftVolts);
+    frontRightMotor.setVoltage(leftVolts);
+
+    backLeftMotor.setVoltage(rightVolts);
+    backRightMotor.setVoltage(rightVolts);
+
+    this.drive.feed();
+  }
+
   @Override
   public void periodic() {
+    // Update position estimate
+    estimator.update(this.gyro.getRotation2d(), getLeftPosition(), getRightPosition());
+
     // This method will be called once per scheduler run
     this.drive.feed();
 
@@ -286,5 +332,22 @@ public class Drivetrain extends SubsystemBase {
     SmartDashboard.putNumber("Max Drive Speed %", this.maxOutput * 100);
     SmartDashboard.putBoolean("Brake Mode", this.idleMode == IdleMode.kBrake ? true : false);
     SmartDashboard.putNumber("Pitch", this.gyro.getPitch());
+  }
+
+  /**
+   * Generates the trajectory command using a PathPlanner trajectory.
+   * @return ramseteCommand
+   */
+  public Command trajectoryCommand(PathPlannerTrajectory trajectory) {
+    PPRamseteCommand ramseteCommand = new PPRamseteCommand(
+      trajectory, 
+      this::getPose, 
+      new RamseteController(),
+      CHASSIS.driveKinematics,
+      this::tankDriveVolts,
+      this
+    );
+
+    return ramseteCommand;
   }
 }
