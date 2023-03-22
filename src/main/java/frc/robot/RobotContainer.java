@@ -4,14 +4,14 @@
 
 package frc.robot;
 
+// Import required modules
 import frc.robot.Commands.Autos;
 import frc.robot.Constants.MECHANISM;
 import frc.robot.Constants.PERIPHERALS;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Mechanism;
 
-import com.revrobotics.CANSparkMax.IdleMode;
-
+// Import required libraries
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -37,11 +37,9 @@ public class RobotContainer {
   CommandXboxController operatorController = new CommandXboxController(PERIPHERALS.OPERATOR_PORT);
 
   // The autonomous routines
-  // A simple auto routine that drives backwards a specified distance, and then
-  // stops.
-  private final Command simpleAuto = Autos.simpleAuto(drivetrain);
-  // A complex auto routine that drives backwards, then balances the robot
-  private final Command complexAuto = Autos.complexAuto(drivetrain);
+  private final Command driveAuto = Autos.driveBack(drivetrain);
+  private final Command balanceAuto = Autos.driveBackAndBalance(drivetrain);
+  private final Command scoreAuto = Autos.scoreTwoPieces(drivetrain, mechanism);
 
   // A chooser for autonomous commands
   SendableChooser<Command> autoChooser = new SendableChooser<>();
@@ -53,16 +51,14 @@ public class RobotContainer {
         drivetrain.arcadeDriveCommand(
             () -> -driverController.getLeftY(), () -> -driverController.getRightX(),
             () -> driverController.getLeftTriggerAxis(), () -> driverController.getRightTriggerAxis())
-            .beforeStarting(() -> {
-              drivetrain.setRampRate(true);
-              drivetrain.setIdleMode(IdleMode.kBrake);
-            }));
+            .beforeStarting(drivetrain.enableRampRate()));
 
     configureBindings();
 
     // Add commands to the autonomous command chooser
-    autoChooser.setDefaultOption("Simple Auto", simpleAuto);
-    autoChooser.addOption("Complex Auto", complexAuto);
+    autoChooser.setDefaultOption("Drive Back", driveAuto);
+    autoChooser.addOption("Balance", balanceAuto);
+    autoChooser.addOption("Score", scoreAuto);
 
     SmartDashboard.putData("Autonomous Route", autoChooser);
   }
@@ -80,19 +76,17 @@ public class RobotContainer {
    */
   public void configureBindings() {
 
-    driverController.rightBumper().or(driverController.leftBumper().or(driverController.y()))
-        .whileTrue(drivetrain.setIdleMode(IdleMode.kBrake))
-        .whileFalse(drivetrain.setIdleMode(IdleMode.kCoast));
+    driverController.rightBumper().or(driverController.y())
+        .onTrue(drivetrain.enableBrakeMode()).onFalse(drivetrain.releaseBrakeMode());
 
     driverController.y().whileTrue(drivetrain.balance());
 
-    driverController.leftBumper().whileTrue(drivetrain.emergencyStop())
-        .onFalse(drivetrain.setIdleMode(IdleMode.kCoast));
+    driverController.leftBumper().whileTrue(drivetrain.emergencyStop());
 
     operatorController.povUp().onTrue(mechanism.setArmPreset(MECHANISM.TOP));
     operatorController.povLeft().onTrue(mechanism.setArmPreset(MECHANISM.MID));
-    operatorController.povRight().onTrue(mechanism.setArmPreset(MECHANISM.TRANSPORT));
     operatorController.povDown().onTrue(mechanism.setArmPreset(MECHANISM.GROUND));
+    operatorController.povRight().onTrue(mechanism.setArmPreset(MECHANISM.TRANSPORT));
     operatorController.rightStick().onTrue(mechanism.setArmPreset(MECHANISM.STATION));
     operatorController.leftStick().onTrue(mechanism.setArmPreset(MECHANISM.DEFAULT));
   }

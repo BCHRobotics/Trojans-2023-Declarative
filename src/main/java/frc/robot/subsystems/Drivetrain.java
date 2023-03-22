@@ -4,15 +4,17 @@
 
 package frc.robot.subsystems;
 
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.CHASSIS;
 import frc.robot.Constants.MISC;
 import frc.robot.Constants.PERIPHERALS;
 import frc.robot.util.Gyro;
-import frc.robot.util.control.PID;
 import frc.robot.util.control.SparkMaxPID;
+
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.PIDCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 
@@ -37,16 +39,11 @@ public class Drivetrain extends SubsystemBase {
   private final SparkMaxPID leftMotorController;
   private final SparkMaxPID rightMotorController;
 
-  // The robot's drive
   private final DifferentialDrive drive;
-
-  private double maxOutput;
-  private IdleMode idleMode;
-  private boolean ramp;
 
   // Objects for gyroscope sensor fusion and balancing
   private Gyro gyro;
-  private PID gyroPid;
+  // private PID gyroPid;
 
   /** Creates a new Drive subsystem. */
   public Drivetrain() {
@@ -95,11 +92,11 @@ public class Drivetrain extends SubsystemBase {
     this.leftMotorController.setMotionProfileType(AccelStrategy.kTrapezoidal);
     this.rightMotorController.setMotionProfileType(AccelStrategy.kTrapezoidal);
 
-    this.drive = new DifferentialDrive(frontLeftMotor, frontRightMotor);
+    this.drive = new DifferentialDrive(this.frontLeftMotor, this.frontRightMotor);
 
     // Objects for balancing
     this.gyro = new Gyro(CHASSIS.GYRO_PORT);
-    this.gyroPid = new PID(CHASSIS.GYRO_CONSTANTS);
+    // this.gyroPid = new PID(CHASSIS.GYRO_CONSTANTS);
 
   }
 
@@ -116,95 +113,158 @@ public class Drivetrain extends SubsystemBase {
     // A split-stick arcade command, with forward/backward controlled by the left
     // hand, and turning controlled by the right.
     return run(() -> {
-      this.maxOutput = (CHASSIS.DEFAULT_OUTPUT + (max.getAsDouble() * CHASSIS.OUTPUT_INTERVAL)
+      this.setMaxOutput(CHASSIS.DEFAULT_OUTPUT + (max.getAsDouble() * CHASSIS.OUTPUT_INTERVAL)
           - (min.getAsDouble() * CHASSIS.OUTPUT_INTERVAL));
-      this.drive.arcadeDrive(fwd.getAsDouble(), rot.getAsDouble());
+      this.setOutput(fwd.getAsDouble(), rot.getAsDouble());
     }).beforeStarting(() -> this.drive.setDeadband(PERIPHERALS.CONTROLLER_DEADBAND))
         .withInterruptBehavior(InterruptionBehavior.kCancelSelf).withName("arcadeDrive");
-  }
-
-  public void setOutput(double left, double right) {
-    this.frontLeftMotor.set(left);
-    this.frontRightMotor.set(right);
   }
 
   /**
    * Sets drivetrain position in inches
    * 
-   * @param leftPos
-   * @param rightPos
+   * @param left
+   * @param right
    */
-  public CommandBase setPosition(double leftPos, double rightPos) {
-    return run(() -> {
-      this.ramp = true;
-      this.leftMotorController.setSmartPosition(leftPos);
-      this.rightMotorController.setSmartPosition(rightPos);
-    }).until(() -> {
+  public CommandBase positionDriveCommand(double leftPos, double rightPos) {
+    return runEnd(() -> {
+      this.setPosition(leftPos, rightPos);
+    }, this::emergencyStop).until(() -> {
       return MISC.WITHIN_TOLERANCE(this.getLeftPosition(), leftPos, CHASSIS.TOLERANCE)
           && MISC.WITHIN_TOLERANCE(this.getRightPosition(), rightPos, CHASSIS.TOLERANCE);
-    }).withName("positionDrive");
+    }).beforeStarting(this.enableBrakeMode()).beforeStarting(this.disableRampRate()).withName("positionDrive");
   }
 
+  // public CommandBase balance() {
+  // return run(() -> {
+  // /**
+  // * Uses PID to balance robot on charging station
+  // */
+  // this.gyroPid.setTarget(0);
+  // this.gyroPid.referenceTimer();
+  // this.gyroPid.setInput(this.gyro.getPitch());
+  // this.gyroPid.calculate();
+  // this.setMaxOutput(1);
+  // this.frontLeftMotor.set(this.gyroPid.getOutput());
+  // this.frontRightMotor.set(this.gyroPid.getOutput());
+  // }).until(() -> {
+  // return MISC.WITHIN_TOLERANCE(this.gyro.getPitch(), 0,
+  // CHASSIS.GYRO_TOLERANCE);
+  // }).beforeStarting(this.enableBrakeMode()).beforeStarting(this.disableRampRate())
+  // .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
+  // }
+
   public CommandBase balance() {
-    return run(() -> {
-      /**
-       * Uses PID to balance robot on charging station
-       */
-      this.gyroPid.setTarget(0);
-      this.gyroPid.referenceTimer();
-      this.gyroPid.setInput(this.gyro.getPitch());
-      this.gyroPid.calculate();
-      this.ramp = true;
-      this.maxOutput = 1;
-      this.frontLeftMotor.set(this.gyroPid.getOutput());
-      this.frontRightMotor.set(this.gyroPid.getOutput());
-    }).withInterruptBehavior(InterruptionBehavior.kCancelSelf);
+    return new PIDCommand(
+        new PIDController(
+            CHASSIS.GYRO_CONSTANTS.kP,
+            CHASSIS.GYRO_CONSTANTS.kI,
+            CHASSIS.GYRO_CONSTANTS.kD),
+        // Close the loop on the turn rate
+        this.gyro::getPitch,
+        // Setpoint is 0
+        0,
+        // Pipe the output to the turning controls
+        output -> this.setOutput(output, 0),
+        // Require the robot drive
+        this).until(() -> {
+          return MISC.WITHIN_TOLERANCE(this.gyro.getPitch(), 0, CHASSIS.GYRO_TOLERANCE);
+        }).beforeStarting(this.enableBrakeMode()).beforeStarting(this.disableRampRate())
+        .beforeStarting(() -> this.setMaxOutput(1))
+        .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
   }
 
   /**
    * Returns a command that enables brake mode on the drivetrain.
-   * 
-   * @param idleMode Brake vs Coast
    */
-  public CommandBase setIdleMode(IdleMode idleMode) {
-    // Motor idle mode set to braking
-    return runOnce(() -> {
-      this.idleMode = idleMode;
-      this.frontLeftMotor.setIdleMode(idleMode);
-      this.frontRightMotor.setIdleMode(idleMode);
-      this.backLeftMotor.setIdleMode(idleMode);
-      this.backRightMotor.setIdleMode(idleMode);
-      this.pushControllerUpdate();
-    });
+  public CommandBase enableBrakeMode() {
+    return runOnce(() -> this.setBrakeMode(IdleMode.kBrake));
+  }
+
+  /**
+   * Returns a command that release brake mode on the drivetrain.
+   */
+  public CommandBase releaseBrakeMode() {
+    return runOnce(() -> this.setBrakeMode(IdleMode.kCoast));
+  }
+
+  private void setBrakeMode(IdleMode idleMode) {
+    this.frontLeftMotor.setIdleMode(idleMode);
+    this.frontRightMotor.setIdleMode(idleMode);
+    this.backLeftMotor.setIdleMode(idleMode);
+    this.backRightMotor.setIdleMode(idleMode);
+    this.pushControllerUpdate();
+    SmartDashboard.putBoolean("Brake Mode", idleMode == IdleMode.kBrake);
   }
 
   /**
    * Returns a command that enables ramp rate on the drivetrain.
-   * 
-   * @param state true vs false
    */
-  public CommandBase setRampRate(boolean state) {
-    return runOnce(() -> {
-      this.ramp = state;
-      this.frontLeftMotor.setOpenLoopRampRate(state ? CHASSIS.RAMP_RATE : 0);
-      this.frontRightMotor.setOpenLoopRampRate(state ? CHASSIS.RAMP_RATE : 0);
-      this.backLeftMotor.setOpenLoopRampRate(state ? CHASSIS.RAMP_RATE : 0);
-      this.backRightMotor.setOpenLoopRampRate(state ? CHASSIS.RAMP_RATE : 0);
-      this.pushControllerUpdate();
-    });
+  public CommandBase enableRampRate() {
+    return runOnce(() -> this.setRampRate(true));
+  }
+
+  /**
+   * Returns a command that disables ramp rate on the drivetrain.
+   */
+  public CommandBase disableRampRate() {
+    return runOnce(() -> this.setRampRate(true));
+  }
+
+  private void setRampRate(boolean state) {
+    this.frontLeftMotor.setOpenLoopRampRate(state ? CHASSIS.RAMP_RATE : 0);
+    this.frontRightMotor.setOpenLoopRampRate(state ? CHASSIS.RAMP_RATE : 0);
+    this.backLeftMotor.setOpenLoopRampRate(state ? CHASSIS.RAMP_RATE : 0);
+    this.backRightMotor.setOpenLoopRampRate(state ? CHASSIS.RAMP_RATE : 0);
+    this.pushControllerUpdate();
+    SmartDashboard.putBoolean("Ramping", state);
+  }
+
+  /**
+   * Sets the drivetrain's maximum percent output
+   * 
+   * @param maxOutput in percent decimal
+   */
+  private void setMaxOutput(double maxOutput) {
+    this.drive.setMaxOutput(maxOutput);
+    SmartDashboard.putNumber("Max Drive Speed %", maxOutput * 100);
   }
 
   /**
    * Returns a command that stops the drivetrain its tracks.
    */
   public CommandBase emergencyStop() {
-    // Motor idle mode set to braking
     return run(() -> {
       this.frontLeftMotor.disable();
       this.frontRightMotor.disable();
       this.backLeftMotor.disable();
       this.backRightMotor.disable();
-    }).withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
+    }).beforeStarting(this::enableBrakeMode).withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
+  }
+
+  /**
+   * Sets motor output using arcade drive controls
+   * 
+   * @param forward linear motion [-1 --> 1] (Backwards --> Forward)
+   * @param rot     rotational motion [-1 --> 1] (L --> R)
+   */
+  public void setOutput(double forward, double rot) {
+    this.drive.arcadeDrive(forward, rot);
+  }
+
+  /**
+   * Sets robot position in inches
+   * 
+   * @param left  position in inches
+   * @param right position in inches
+   */
+  public void setPosition(double left, double right) {
+    if (!MISC.WITHIN_TOLERANCE(this.getLeftPosition(), left, CHASSIS.TOLERANCE)
+        && !MISC.WITHIN_TOLERANCE(this.getRightPosition(), right, CHASSIS.TOLERANCE))
+      return;
+
+    this.leftMotorController.setSmartPosition(left);
+    this.rightMotorController.setSmartPosition(right);
   }
 
   /**
@@ -282,14 +342,7 @@ public class Drivetrain extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    this.drive.feed();
 
-    this.setIdleMode(this.idleMode);
-    this.setRampRate(this.ramp);
-    this.drive.setMaxOutput(this.maxOutput);
-
-    SmartDashboard.putNumber("Max Drive Speed %", this.maxOutput * 100);
-    SmartDashboard.putBoolean("Brake Mode", this.idleMode == IdleMode.kBrake ? true : false);
     SmartDashboard.putNumber("Pitch", this.gyro.getPitch());
   }
 }

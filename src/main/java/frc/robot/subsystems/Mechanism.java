@@ -4,6 +4,11 @@
 
 package frc.robot.subsystems;
 
+import frc.robot.Constants.MECHANISM;
+import frc.robot.Constants.MISC;
+import frc.robot.util.control.ArmPresets;
+import frc.robot.util.control.SparkMaxPID;
+
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.SparkMaxAbsoluteEncoder;
 import com.revrobotics.CANSparkMax.SoftLimitDirection;
@@ -13,10 +18,6 @@ import com.revrobotics.SparkMaxPIDController.AccelStrategy;
 
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.MECHANISM;
-import frc.robot.Constants.MISC;
-import frc.robot.util.control.ArmPresets;
-import frc.robot.util.control.SparkMaxPID;
 
 public class Mechanism extends SubsystemBase {
   private final CANSparkMax shoulderMotor = new CANSparkMax(MECHANISM.SHOULDER_ID, MotorType.kBrushless);

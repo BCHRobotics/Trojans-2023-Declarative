@@ -4,58 +4,86 @@
 
 package frc.robot.Commands;
 
-import com.revrobotics.CANSparkMax.IdleMode;
-
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.FunctionalCommand;
+import frc.robot.Constants.MECHANISM;
 import frc.robot.subsystems.Drivetrain;
+import frc.robot.subsystems.Mechanism;
 
 /** Container for auto command factories. */
 public final class Autos {
+
   /**
-   * A simple auto routine that drives forward a specified distance, and then
+   * A simple auto routine that drives backward a specified distance, and then
    * stops.
    */
-  public static Command simpleAuto(Drivetrain drive) {
-    return new FunctionalCommand(
-        // Reset encoders on command start
-        drive::resetEncoders,
-        // Drive forward while the command is executing
-        () -> {
-          // drive.setPosition(-110, -110);
-          drive.setIdleMode(IdleMode.kBrake);
-          drive.setOutput(-0.4, -0.4);
-        },
-        // Stop driving at the end of the command
-        interrupt -> drive.setOutput(0, 0),
-        // End the command when the robot's driven distance exceeds the desired value
-        () -> drive.getAveragePosition() <= -110,
-        // Require the drive subsystem
-        drive);
+  public static Command driveBack(Drivetrain drive) {
+    return drive.positionDriveCommand(-100, -100).beforeStarting(drive::resetEncoders);
   }
 
   /**
-   * A complex auto routine that drives forward, drops a hatch, and then drives
-   * backward.
+   * A complex auto routine that drives backward, then balances
    */
-  public static Command complexAuto(Drivetrain drive) {
+  public static Command driveBackAndBalance(Drivetrain drive) {
     return Commands.sequence(
-        // Drive forward up to the front of the cargo ship
-        new FunctionalCommand(
-            // Reset encoders on command start
-            drive::resetEncoders,
-            // Drive forward while the command is executing
-            () -> drive.setPosition(-110, -110),
-            // Stop driving at the end of the command
-            interrupt -> drive.emergencyStop().alongWith(drive.setIdleMode(IdleMode.kBrake)),
-            // End the command when the robot's driven distance exceeds the desired value
-            () -> drive.getAveragePosition() <= -110,
-            // Require the drive subsystem
-            drive),
+        // Drive onto the charging station
+        drive.positionDriveCommand(-100, -100),
 
         // Balance the robot
-        drive.balance().andThen(drive.setPosition(30, -30).beforeStarting(drive::resetEncoders)));
+        drive.balance()).beforeStarting(drive::resetEncoders);
+  }
+
+  /**
+   * A complex auto routine that places a game piece, picks up another one then
+   * places
+   * it.
+   */
+  public static Command scoreTwoPieces(Drivetrain drive, Mechanism mech) {
+    return Commands.sequence(
+
+        // Raise arm to reach target
+        mech.setArmPreset(MECHANISM.MID),
+
+        drive.positionDriveCommand(12, 12),
+
+        // TODO: add drop game piece command
+
+        drive.positionDriveCommand(-80, -80).alongWith(mech.setArmPreset(MECHANISM.TRANSPORT)),
+
+        drive.positionDriveCommand(-140, -20),
+
+        mech.setArmPreset(MECHANISM.GROUND),
+
+        drive.positionDriveCommand(-116, -4),
+
+        // TODO: add ground pickup command
+
+        mech.setArmPreset(MECHANISM.TRANSPORT),
+
+        drive.positionDriveCommand(-140, -20),
+
+        drive.positionDriveCommand(-80, -80),
+
+        drive.positionDriveCommand(12, 12).alongWith(mech.setArmPreset(MECHANISM.MID)),
+
+        // TODO: add score game piece command
+
+        drive.positionDriveCommand(0, 0).alongWith(mech.setArmPreset(MECHANISM.DEFAULT)))
+        .beforeStarting(drive::resetEncoders);
+  }
+
+  /**
+   * A highly sophisticated auto routine that places a cone on the middle peg,
+   * drives back, turns around, grabs another cone, and then drives
+   * to the charging station and balances.
+   */
+  public static Command scoreAndBalance(Drivetrain drive) {
+    return Commands.sequence(
+        // Drive onto the charging station
+        drive.positionDriveCommand(0, 0),
+
+        // Balance the robot
+        drive.balance()).beforeStarting(drive::resetEncoders);
   }
 
   private Autos() {
