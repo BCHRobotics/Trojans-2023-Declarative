@@ -40,6 +40,8 @@ public class RobotContainer {
   private final Command driveAuto = Autos.driveBack(drivetrain);
   private final Command balanceAuto = Autos.driveBackAndBalance(drivetrain);
   private final Command scoreAuto = Autos.scoreTwoPieces(drivetrain, mechanism);
+  private final Command pathAuto = Autos.pathPlannerAuto(drivetrain, "TestPathA");
+
 
   // A chooser for autonomous commands
   SendableChooser<Command> autoChooser = new SendableChooser<>();
@@ -59,6 +61,8 @@ public class RobotContainer {
     autoChooser.setDefaultOption("Drive Back", driveAuto);
     autoChooser.addOption("Balance", balanceAuto);
     autoChooser.addOption("Score", scoreAuto);
+    autoChooser.addOption("PathPlanner Auto", pathAuto);
+
 
     SmartDashboard.putData("Autonomous Route", autoChooser);
   }

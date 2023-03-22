@@ -12,6 +12,9 @@ import frc.robot.util.control.PID;
 import frc.robot.util.control.SparkMaxPID;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.estimator.DifferentialDrivePoseEstimator;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
@@ -45,6 +48,9 @@ public class Drivetrain extends SubsystemBase {
   // Objects for gyroscope sensor fusion and balancing
   private Gyro gyro;
   private PID gyroPid;
+
+  // Estimator
+  private DifferentialDrivePoseEstimator estimator;
 
   /** Creates a new Drive subsystem. */
   public Drivetrain() {
@@ -99,6 +105,7 @@ public class Drivetrain extends SubsystemBase {
     this.gyro = new Gyro(CHASSIS.GYRO_PORT);
     this.gyroPid = new PID(CHASSIS.GYRO_CONSTANTS);
 
+    this.estimator = new DifferentialDrivePoseEstimator(CHASSIS.DRIVE_KINEMATICS, gyro.getRotation2d() , Units.inchesToMeters(getLeftPosition()), Units.inchesToMeters(getRightPosition()), new Pose2d());
   }
 
   /**
@@ -344,8 +351,40 @@ public class Drivetrain extends SubsystemBase {
     this.backRightMotor.burnFlash();
   }
 
+  /**
+   * Returns estimated position
+   */
+  public Pose2d getPose() {
+    return estimator.getEstimatedPosition();
+  }
+
+  /**
+   * Resets estimated position
+   */
+  public void resetPose(Pose2d pose) {
+    estimator.resetPosition(gyro.getRotation2d(), Units.inchesToMeters(getLeftPosition()), Units.inchesToMeters(getRightPosition()), pose);
+  }
+
+  /**
+   * Controls the left and right sides of the drive directly with voltages.
+   *
+   * @param leftVolts the commanded left output
+   * @param rightVolts the commanded right output
+   */
+  public void tankDriveVolts(double leftVolts, double rightVolts) {
+    frontLeftMotor.setVoltage(leftVolts);
+    frontRightMotor.setVoltage(leftVolts);
+
+    backLeftMotor.setVoltage(rightVolts);
+    backRightMotor.setVoltage(rightVolts);
+
+    this.drive.feed();
+  }
+
   @Override
   public void periodic() {
+    estimator.resetPosition(gyro.getRotation2d(), Units.inchesToMeters(getLeftPosition()), Units.inchesToMeters(getRightPosition()), estimator.getEstimatedPosition());
+
     // This method will be called once per scheduler run
     this.drive.feed();
 
