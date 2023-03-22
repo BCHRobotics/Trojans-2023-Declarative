@@ -113,7 +113,8 @@ public class Drivetrain extends SubsystemBase {
 
     this.estimator = new DifferentialDrivePoseEstimator(CHASSIS.DRIVE_KINEMATICS, gyro.getRotation2d(),
         Units.inchesToMeters(getLeftPosition()), Units.inchesToMeters(getRightPosition()), new Pose2d());
-    this.odometry = new DifferentialDriveOdometry(gyro.getRotation2d(), Units.inchesToMeters(getLeftPosition()), Units.inchesToMeters(getRightPosition()));
+    this.odometry = new DifferentialDriveOdometry(gyro.getRotation2d(), Units.inchesToMeters(getLeftPosition()),
+        Units.inchesToMeters(getRightPosition()));
   }
 
   /**
@@ -371,10 +372,12 @@ public class Drivetrain extends SubsystemBase {
    * Resets estimated position
    */
   public void resetPose(Pose2d pose) {
-    // estimator.resetPosition(gyro.getRotation2d(), Units.inchesToMeters(getLeftPosition()),
-    //     Units.inchesToMeters(getRightPosition()), pose);
-    odometry.resetPosition(gyro.getRotation2d(), Units.inchesToMeters(getLeftPosition()), Units.inchesToMeters(getRightPosition()), pose);
-      
+    // estimator.resetPosition(gyro.getRotation2d(),
+    // Units.inchesToMeters(getLeftPosition()),
+    // Units.inchesToMeters(getRightPosition()), pose);
+    odometry.resetPosition(gyro.getRotation2d(), Units.inchesToMeters(getLeftPosition()),
+        Units.inchesToMeters(getRightPosition()), pose);
+
   }
 
   /**
@@ -393,7 +396,6 @@ public class Drivetrain extends SubsystemBase {
     this.drive.feed();
   }
 
-
   @Override
   public void periodic() {
     odometry.resetPosition(gyro.getRotation2d(), Units.inchesToMeters(getLeftPosition()),
@@ -407,17 +409,17 @@ public class Drivetrain extends SubsystemBase {
 
   /**
    * Generates the trajectory command using a PathPlanner trajectory.
+   * 
    * @return ramseteCommand
    */
   public Command trajectoryCommand(PathPlannerTrajectory trajectory) {
     PPRamseteCommand ramseteCommand = new PPRamseteCommand(
-      trajectory, 
-      this::getPose, 
-      new RamseteController(),
-      CHASSIS.DRIVE_KINEMATICS,
-      this::tankDriveVolts,
-      this
-    );
+        trajectory,
+        this::getPose,
+        new RamseteController(),
+        CHASSIS.DRIVE_KINEMATICS,
+        this::tankDriveVolts,
+        this);
 
     return ramseteCommand;
   }
