@@ -13,9 +13,11 @@ import frc.robot.util.control.SparkMaxPID;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.RamseteController;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.estimator.DifferentialDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
+import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -25,6 +27,7 @@ import edu.wpi.first.wpilibj2.command.PIDCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 
+import java.io.PipedInputStream;
 import java.util.function.DoubleSupplier;
 
 import com.pathplanner.lib.PathPlannerTrajectory;
@@ -396,6 +399,11 @@ public class Drivetrain extends SubsystemBase {
     this.drive.feed();
   }
 
+  public DifferentialDriveWheelSpeeds speeds() {
+    return new DifferentialDriveWheelSpeeds(Units.inchesToMeters(getLeftVelocity()), Units.inchesToMeters(getRightVelocity()));
+  }
+
+
   @Override
   public void periodic() {
     odometry.resetPosition(gyro.getRotation2d(), Units.inchesToMeters(getLeftPosition()),
@@ -413,13 +421,17 @@ public class Drivetrain extends SubsystemBase {
    * @return ramseteCommand
    */
   public Command trajectoryCommand(PathPlannerTrajectory trajectory) {
+    PIDController leftController = new PIDController(2.6492e-7, 0, 0);
+    PIDController rightController = new PIDController(6.4069e-9, 0, 0);
+    SimpleMotorFeedforward feedforward = new SimpleMotorFeedforward(0.21683, 1.6482, 1.038);
     PPRamseteCommand ramseteCommand = new PPRamseteCommand(
-        trajectory,
-        this::getPose,
-        new RamseteController(),
-        CHASSIS.DRIVE_KINEMATICS,
-        this::tankDriveVolts,
-        this);
+      trajectory, 
+      this::getPose, 
+      new RamseteController(),
+      CHASSIS.DRIVE_KINEMATICS,
+      this::tankDriveVolts,
+      this
+    );
 
     return ramseteCommand;
   }

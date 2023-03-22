@@ -64,8 +64,8 @@ public class RobotContainer {
     autoChooser.setDefaultOption("Drive Back", driveAuto);
     autoChooser.addOption("Balance", balanceAuto);
     autoChooser.addOption("Score", scoreAuto);
-    autoChooser.addOption("PathPlanner Auto", pathAuto);
-    autoChooser.addOption("PathPlanner Auto2", drivetrain.trajectoryCommand(PathPlanner.loadPath("TestPathA", CHASSIS.PATH_CONSTRAINTS)));
+    // autoChooser.addOption("PathPlanner Auto", pathAuto);
+    autoChooser.addOption("PathPlanner New Auto", drivetrain.trajectoryCommand(PathPlanner.loadPath("TestPathA", CHASSIS.PATH_CONSTRAINTS)));
 
     SmartDashboard.putData("Autonomous Route", autoChooser);
   }
