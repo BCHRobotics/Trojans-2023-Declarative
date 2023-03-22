@@ -7,6 +7,8 @@ package frc.robot.Commands;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.ejml.simple.AutomaticSimpleMatrixConvert;
+
 import com.pathplanner.lib.PathPlanner;
 import com.pathplanner.lib.PathPlannerTrajectory;
 import com.pathplanner.lib.auto.RamseteAutoBuilder;
@@ -15,6 +17,7 @@ import com.revrobotics.CANSparkMax.IdleMode;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.math.controller.RamseteController;
 
 import frc.robot.subsystems.Drivetrain;
@@ -72,10 +75,12 @@ public final class Autos {
    */
   public static Command pathPlannerAuto(Drivetrain drive, String pathName) {
     Map<String, Command> autoMap = new HashMap<>(); // No events for now;
+
     
     RamseteAutoBuilder autoBuilder = new RamseteAutoBuilder(drive::getPose, drive::resetPose, new RamseteController(), CHASSIS.DRIVE_KINEMATICS, drive::tankDriveVolts, autoMap, drive);
     PathPlannerTrajectory trajectory = PathPlanner.loadPath(pathName, CHASSIS.PATH_CONSTRAINTS);
-    
+
+    drive.resetPose(trajectory.getInitialPose());
     return autoBuilder.followPath(trajectory);
   }
 
