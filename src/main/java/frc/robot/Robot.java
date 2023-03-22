@@ -4,9 +4,14 @@
 
 package frc.robot;
 
+import com.fasterxml.jackson.databind.ser.std.StdKeySerializers.Default;
+
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.Constants.MECHANISM;
+import frc.robot.subsystems.Drivetrain;
+import frc.robot.subsystems.Mechanism;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -59,6 +64,7 @@ public class Robot extends TimedRobot {
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
+    robotContainer.resetDrivetrain();
   }
 
   @Override
@@ -89,6 +95,7 @@ public class Robot extends TimedRobot {
     if (autonomousCommand != null) {
       autonomousCommand.cancel();
     }
+    robotContainer.resetMechanism();
   }
 
   /** This function is called periodically during operator control. */

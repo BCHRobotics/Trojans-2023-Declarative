@@ -105,7 +105,8 @@ public class Drivetrain extends SubsystemBase {
     this.gyro = new Gyro(CHASSIS.GYRO_PORT);
     this.gyroPid = new PID(CHASSIS.GYRO_CONSTANTS);
 
-    this.estimator = new DifferentialDrivePoseEstimator(CHASSIS.DRIVE_KINEMATICS, gyro.getRotation2d() , Units.inchesToMeters(getLeftPosition()), Units.inchesToMeters(getRightPosition()), new Pose2d());
+    this.estimator = new DifferentialDrivePoseEstimator(CHASSIS.DRIVE_KINEMATICS, gyro.getRotation2d(),
+        Units.inchesToMeters(getLeftPosition()), Units.inchesToMeters(getRightPosition()), new Pose2d());
   }
 
   /**
@@ -190,7 +191,7 @@ public class Drivetrain extends SubsystemBase {
     return runOnce(() -> this.setBrakeMode(IdleMode.kCoast));
   }
 
-  private void setBrakeMode(IdleMode idleMode) {
+  public void setBrakeMode(IdleMode idleMode) {
     this.frontLeftMotor.setIdleMode(idleMode);
     this.frontRightMotor.setIdleMode(idleMode);
     this.backLeftMotor.setIdleMode(idleMode);
@@ -227,7 +228,7 @@ public class Drivetrain extends SubsystemBase {
    * 
    * @param maxOutput in percent decimal
    */
-  private void setMaxOutput(double maxOutput) {
+  public void setMaxOutput(double maxOutput) {
     this.drive.setMaxOutput(maxOutput);
     SmartDashboard.putNumber("Max Drive Speed %", maxOutput * 100);
   }
@@ -259,7 +260,7 @@ public class Drivetrain extends SubsystemBase {
    * 
    * @param percent linear motion [-1 --> 1] (Backwards --> Forward)
    */
-  private void setDriveOutput(double percent) {
+  public void setDriveOutput(double percent) {
     this.frontLeftMotor.set(percent);
     this.frontRightMotor.set(percent);
   }
@@ -362,13 +363,14 @@ public class Drivetrain extends SubsystemBase {
    * Resets estimated position
    */
   public void resetPose(Pose2d pose) {
-    estimator.resetPosition(gyro.getRotation2d(), Units.inchesToMeters(getLeftPosition()), Units.inchesToMeters(getRightPosition()), pose);
+    estimator.resetPosition(gyro.getRotation2d(), Units.inchesToMeters(getLeftPosition()),
+        Units.inchesToMeters(getRightPosition()), pose);
   }
 
   /**
    * Controls the left and right sides of the drive directly with voltages.
    *
-   * @param leftVolts the commanded left output
+   * @param leftVolts  the commanded left output
    * @param rightVolts the commanded right output
    */
   public void tankDriveVolts(double leftVolts, double rightVolts) {
@@ -383,7 +385,8 @@ public class Drivetrain extends SubsystemBase {
 
   @Override
   public void periodic() {
-    estimator.resetPosition(gyro.getRotation2d(), Units.inchesToMeters(getLeftPosition()), Units.inchesToMeters(getRightPosition()), estimator.getEstimatedPosition());
+    estimator.resetPosition(gyro.getRotation2d(), Units.inchesToMeters(getLeftPosition()),
+        Units.inchesToMeters(getRightPosition()), estimator.getEstimatedPosition());
 
     // This method will be called once per scheduler run
     this.drive.feed();

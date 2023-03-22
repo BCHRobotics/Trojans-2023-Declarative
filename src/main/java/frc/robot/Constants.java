@@ -7,6 +7,7 @@ package frc.robot;
 import com.pathplanner.lib.PathConstraints;
 
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.SerialPort;
 import frc.robot.util.control.ArmPresets;
 import frc.robot.util.control.PIDConstants;
@@ -73,7 +74,8 @@ public final class Constants {
     public static final PIDConstants SEEK_CONSTANTS = new PIDConstants(0.00012, 0, 0.0025, 0.00005);
 
     // Drive kinematics
-    public static final DifferentialDriveKinematics DRIVE_KINEMATICS = new DifferentialDriveKinematics(TRACK_WIDTH / 39.37); // inches to metres;
+    public static final DifferentialDriveKinematics DRIVE_KINEMATICS = new DifferentialDriveKinematics(
+        Units.inchesToMeters(TRACK_WIDTH)); // inches to metres;
     public static final PathConstraints PATH_CONSTRAINTS = new PathConstraints(1, 0.5);
   }
 

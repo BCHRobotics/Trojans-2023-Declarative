@@ -11,6 +11,8 @@ import frc.robot.Constants.PERIPHERALS;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Mechanism;
 
+import com.revrobotics.CANSparkMax.IdleMode;
+
 // Import required libraries
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -42,7 +44,6 @@ public class RobotContainer {
   private final Command scoreAuto = Autos.scoreTwoPieces(drivetrain, mechanism);
   private final Command pathAuto = Autos.pathPlannerAuto(drivetrain, "TestPathA");
 
-
   // A chooser for autonomous commands
   SendableChooser<Command> autoChooser = new SendableChooser<>();
 
@@ -62,7 +63,6 @@ public class RobotContainer {
     autoChooser.addOption("Balance", balanceAuto);
     autoChooser.addOption("Score", scoreAuto);
     autoChooser.addOption("PathPlanner Auto", pathAuto);
-
 
     SmartDashboard.putData("Autonomous Route", autoChooser);
   }
@@ -94,6 +94,15 @@ public class RobotContainer {
     operatorController.povRight().onTrue(mechanism.setArmPreset(MECHANISM.TRANSPORT));
     operatorController.rightStick().onTrue(mechanism.setArmPreset(MECHANISM.STATION));
     operatorController.leftStick().onTrue(mechanism.setArmPreset(MECHANISM.DEFAULT));
+  }
+
+  public void resetDrivetrain() {
+    drivetrain.setBrakeMode(IdleMode.kBrake);
+    drivetrain.setDriveOutput(0);
+  }
+
+  public void resetMechanism() {
+    mechanism.setArmPreset(MECHANISM.DEFAULT).schedule();
   }
 
   /**
