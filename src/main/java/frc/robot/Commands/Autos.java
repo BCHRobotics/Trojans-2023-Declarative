@@ -4,12 +4,21 @@
 
 package frc.robot.Commands;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import com.pathplanner.lib.PathPlanner;
+import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.auto.RamseteAutoBuilder;
 import com.revrobotics.CANSparkMax.IdleMode;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
+import edu.wpi.first.math.controller.RamseteController;
+
 import frc.robot.subsystems.Drivetrain;
+import frc.robot.Constants.CHASSIS;;
 
 /** Container for auto command factories. */
 public final class Autos {
@@ -56,6 +65,18 @@ public final class Autos {
 
         // Balance the robot
         drive.balance().andThen(drive.setPosition(30, -30).beforeStarting(drive::resetEncoders)));
+  }
+
+  /**
+   * A basic auto that utilises RamseteCommand and PathPlannerLib to go in a circle.
+   */
+  public static Command pathPlannerAuto(Drivetrain drive, String pathName) {
+    Map<String, Command> autoMap = new HashMap<>(); // No events for now;
+    
+    RamseteAutoBuilder autoBuilder = new RamseteAutoBuilder(drive::getPose, drive::resetPose, new RamseteController(), CHASSIS.DRIVE_KINEMATICS, drive::tankDriveVolts, autoMap, drive);
+    PathPlannerTrajectory trajectory = PathPlanner.loadPath(pathName, CHASSIS.PATH_CONSTRAINTS);
+    
+    return autoBuilder.followPath(trajectory);
   }
 
   private Autos() {

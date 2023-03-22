@@ -92,11 +92,11 @@ public class Drivetrain extends SubsystemBase {
     this.leftEncoder = this.frontLeftMotor.getEncoder();
     this.righEncoder = this.frontRightMotor.getEncoder();
 
-    this.leftEncoder.setPositionConversionFactor(CHASSIS.LEFT_POSITION_CONVERSION / 39.37);
-    this.righEncoder.setPositionConversionFactor(CHASSIS.RIGHT_POSITION_CONVERSION / 39.37);
+    this.leftEncoder.setPositionConversionFactor(CHASSIS.LEFT_POSITION_CONVERSION);
+    this.righEncoder.setPositionConversionFactor(CHASSIS.RIGHT_POSITION_CONVERSION);
 
-    this.leftEncoder.setVelocityConversionFactor(CHASSIS.LEFT_VELOCITY_CONVERSION / 39.37);
-    this.righEncoder.setVelocityConversionFactor(CHASSIS.RIGHT_VELOCITY_CONVERSION / 39.37);
+    this.leftEncoder.setVelocityConversionFactor(CHASSIS.LEFT_VELOCITY_CONVERSION);
+    this.righEncoder.setVelocityConversionFactor(CHASSIS.RIGHT_VELOCITY_CONVERSION);
 
     this.leftMotorController = new SparkMaxPID(this.frontLeftMotor, CHASSIS.LEFT_DRIVE_CONSTANTS);
     this.rightMotorController = new SparkMaxPID(this.frontRightMotor, CHASSIS.RIGHT_DRIVE_CONSTANTS);
@@ -113,7 +113,7 @@ public class Drivetrain extends SubsystemBase {
     this.gyro = new Gyro(CHASSIS.GYRO_PORT);
     this.gyroPid = new PID(CHASSIS.GYRO_CONSTANTS);
 
-    this.estimator = new DifferentialDrivePoseEstimator(CHASSIS.driveKinematics, gyro.getRotation2d() , getLeftPosition(), getRightPosition(), new Pose2d());
+    this.estimator = new DifferentialDrivePoseEstimator(CHASSIS.DRIVE_KINEMATICS, gyro.getRotation2d() , getLeftPosition(), getRightPosition(), new Pose2d());
   }
 
   /**
@@ -348,7 +348,7 @@ public class Drivetrain extends SubsystemBase {
       trajectory, 
       this::getPose, 
       new RamseteController(),
-      CHASSIS.driveKinematics,
+      CHASSIS.DRIVE_KINEMATICS,
       this::tankDriveVolts,
       this
     );

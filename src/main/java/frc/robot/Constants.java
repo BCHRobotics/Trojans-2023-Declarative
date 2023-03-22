@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import com.pathplanner.lib.PathConstraints;
+
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.wpilibj.SerialPort;
 import frc.robot.util.control.ArmPresets;
@@ -41,9 +43,9 @@ public final class Constants {
     public static final double TRACK_WIDTH = 19;
 
     // Chasis conversion factors TODO: Re-collect conversion data
-    public static final double LEFT_POSITION_CONVERSION = 48 / 18.23804473876953; // inches per
+    public static final double LEFT_POSITION_CONVERSION = (48 / 18.23804473876953) / 39.37; // metres per
     // revolutions
-    public static final double RIGHT_POSITION_CONVERSION = 48 / 18.14280891418457; // #inches / #revs
+    public static final double RIGHT_POSITION_CONVERSION = (48 / 18.14280891418457) / 39.37; // #metres / #revs
 
     public static final double LEFT_VELOCITY_CONVERSION = LEFT_POSITION_CONVERSION / 60.0; // inches per
                                                                                            // second
@@ -70,7 +72,9 @@ public final class Constants {
     // Target seek PID Constants TODO: Tune seeking constants
     public static final PIDConstants SEEK_CONSTANTS = new PIDConstants(0.00012, 0, 0.0025, 0.00005);
 
-    public static final DifferentialDriveKinematics driveKinematics = new DifferentialDriveKinematics(TRACK_WIDTH / 39.37); // inches to metres;
+    // Drive kinematics
+    public static final DifferentialDriveKinematics DRIVE_KINEMATICS = new DifferentialDriveKinematics(TRACK_WIDTH / 39.37); // inches to metres;
+    public static final PathConstraints PATH_CONSTRAINTS = new PathConstraints(3, 1.5);
   }
 
   public static final class MECHANISM {
