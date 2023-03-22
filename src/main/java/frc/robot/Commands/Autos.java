@@ -4,14 +4,18 @@
 
 package frc.robot.Commands;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.Constants.MECHANISM;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Mechanism;
 
 /** Container for auto command factories. */
 public final class Autos {
+
+  private static final Timer timer = new Timer();
 
   /**
    * A simple auto routine that drives backward a specified distance, and then
@@ -27,49 +31,51 @@ public final class Autos {
   public static Command driveBackAndBalance(Drivetrain drive) {
     return Commands.sequence(
         // Drive onto the charging station
-        drive.positionDriveCommand(-100, -100),
+        drive.positionDriveCommand(-60, -60).beforeStarting(drive::resetEncoders),
 
         // Balance the robot
-        drive.balance()).beforeStarting(drive::resetEncoders);
+        drive.balance());
   }
 
   /**
    * A complex auto routine that places a game piece, picks up another one then
-   * places
-   * it.
+   * places it.
    */
   public static Command scoreTwoPieces(Drivetrain drive, Mechanism mech) {
     return Commands.sequence(
 
         // Raise arm to reach target
-        mech.setArmPreset(MECHANISM.MID),
+        mech.setArmPreset(MECHANISM.MID).until(() -> timer.advanceIfElapsed(2)),
 
-        drive.positionDriveCommand(12, 12),
+        drive.positionDriveCommand(16, 16).beforeStarting(drive::resetEncoders).until(() -> timer.advanceIfElapsed(3)),
 
         // TODO: add drop game piece command
 
-        drive.positionDriveCommand(-80, -80).alongWith(mech.setArmPreset(MECHANISM.TRANSPORT)),
+        drive.positionDriveCommand(-40, -40)
+            .alongWith(mech.setArmPreset(MECHANISM.TRANSPORT)).until(() -> timer.advanceIfElapsed(3.5)),
 
-        drive.positionDriveCommand(-140, -20),
+        drive.positionDriveCommand(-72, -8).until(() -> timer.advanceIfElapsed(3.5)),
 
-        mech.setArmPreset(MECHANISM.GROUND),
+        mech.setArmPreset(MECHANISM.GROUND).until(() -> timer.advanceIfElapsed(2)),
 
-        drive.positionDriveCommand(-116, -4),
+        drive.positionDriveCommand(-52, 12).until(() -> timer.advanceIfElapsed(3)),
 
         // TODO: add ground pickup command
 
-        mech.setArmPreset(MECHANISM.TRANSPORT),
+        mech.setArmPreset(MECHANISM.TRANSPORT).until(() -> timer.advanceIfElapsed(3)),
 
-        drive.positionDriveCommand(-140, -20),
+        drive.positionDriveCommand(-72, -8).until(() -> timer.advanceIfElapsed(3)),
 
-        drive.positionDriveCommand(-80, -80),
+        drive.positionDriveCommand(-40, -40).until(() -> timer.advanceIfElapsed(3)),
 
-        drive.positionDriveCommand(12, 12).alongWith(mech.setArmPreset(MECHANISM.MID)),
+        drive.positionDriveCommand(12, 12).alongWith(mech.setArmPreset(MECHANISM.MID))
+            .until(() -> timer.advanceIfElapsed(5)),
 
         // TODO: add score game piece command
 
-        drive.positionDriveCommand(0, 0).alongWith(mech.setArmPreset(MECHANISM.DEFAULT)))
-        .beforeStarting(drive::resetEncoders);
+        drive.positionDriveCommand(0, 0).alongWith(mech.setArmPreset(MECHANISM.DEFAULT))
+            .until(() -> timer.advanceIfElapsed(5)))
+        .beforeStarting(timer::restart).andThen(timer::stop);
   }
 
   /**

@@ -106,8 +106,8 @@ public final class Constants {
         0, 0, 5700, 3500, 0.2);
 
     public static final SparkMaxConstants WRIST_CONTROL_CONSTANTS = new SparkMaxConstants(
-        2.1028E-05, 0, 5.1398E-05, 0, 0.00004, -1, 1,
-        0, 0, 5700, 5700, 0.05);
+        2.1028E-05, 0, 5.1398E-05, 0, 0.00004, -1, 0.5,
+        0, 0, 5700, 4500, 0.05);
 
     // Arm preset profiles TODO: Verify Presets with Drive Team
     public static final ArmPresets DEFAULT = new ArmPresets(0, -90);

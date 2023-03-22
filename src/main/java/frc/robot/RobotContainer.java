@@ -81,7 +81,8 @@ public class RobotContainer {
 
     driverController.y().whileTrue(drivetrain.balance());
 
-    driverController.leftBumper().whileTrue(drivetrain.emergencyStop());
+    driverController.leftBumper().whileTrue(
+        drivetrain.enableBrakeMode().andThen(drivetrain.emergencyStop())).onFalse(drivetrain.releaseBrakeMode());
 
     operatorController.povUp().onTrue(mechanism.setArmPreset(MECHANISM.TOP));
     operatorController.povLeft().onTrue(mechanism.setArmPreset(MECHANISM.MID));
