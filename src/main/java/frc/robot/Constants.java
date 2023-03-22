@@ -74,7 +74,7 @@ public final class Constants {
 
     // Drive kinematics
     public static final DifferentialDriveKinematics DRIVE_KINEMATICS = new DifferentialDriveKinematics(TRACK_WIDTH / 39.37); // inches to metres;
-    public static final PathConstraints PATH_CONSTRAINTS = new PathConstraints(3, 1.5);
+    public static final PathConstraints PATH_CONSTRAINTS = new PathConstraints(1, 0.5);
   }
 
   public static final class MECHANISM {
