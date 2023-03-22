@@ -12,11 +12,14 @@ import frc.robot.util.control.PID;
 import frc.robot.util.control.SparkMaxPID;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.estimator.DifferentialDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.PIDCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -24,6 +27,8 @@ import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 
 import java.util.function.DoubleSupplier;
 
+import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.commands.PPRamseteCommand;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkMax.IdleMode;
@@ -51,6 +56,7 @@ public class Drivetrain extends SubsystemBase {
 
   // Estimator
   private DifferentialDrivePoseEstimator estimator;
+  private DifferentialDriveOdometry odometry;
 
   /** Creates a new Drive subsystem. */
   public Drivetrain() {
@@ -107,6 +113,7 @@ public class Drivetrain extends SubsystemBase {
 
     this.estimator = new DifferentialDrivePoseEstimator(CHASSIS.DRIVE_KINEMATICS, gyro.getRotation2d(),
         Units.inchesToMeters(getLeftPosition()), Units.inchesToMeters(getRightPosition()), new Pose2d());
+    this.odometry = new DifferentialDriveOdometry(gyro.getRotation2d(), Units.inchesToMeters(getLeftPosition()), Units.inchesToMeters(getRightPosition()));
   }
 
   /**
@@ -356,15 +363,18 @@ public class Drivetrain extends SubsystemBase {
    * Returns estimated position
    */
   public Pose2d getPose() {
-    return estimator.getEstimatedPosition();
+    // return estimator.getEstimatedPosition();
+    return odometry.getPoseMeters();
   }
 
   /**
    * Resets estimated position
    */
   public void resetPose(Pose2d pose) {
-    estimator.resetPosition(gyro.getRotation2d(), Units.inchesToMeters(getLeftPosition()),
-        Units.inchesToMeters(getRightPosition()), pose);
+    // estimator.resetPosition(gyro.getRotation2d(), Units.inchesToMeters(getLeftPosition()),
+    //     Units.inchesToMeters(getRightPosition()), pose);
+    odometry.resetPosition(gyro.getRotation2d(), Units.inchesToMeters(getLeftPosition()), Units.inchesToMeters(getRightPosition()), pose);
+      
   }
 
   /**
@@ -383,14 +393,32 @@ public class Drivetrain extends SubsystemBase {
     this.drive.feed();
   }
 
+
   @Override
   public void periodic() {
-    estimator.resetPosition(gyro.getRotation2d(), Units.inchesToMeters(getLeftPosition()),
+    odometry.resetPosition(gyro.getRotation2d(), Units.inchesToMeters(getLeftPosition()),
         Units.inchesToMeters(getRightPosition()), estimator.getEstimatedPosition());
 
     // This method will be called once per scheduler run
     this.drive.feed();
 
     SmartDashboard.putNumber("Pitch", this.gyro.getPitch());
+  }
+
+  /**
+   * Generates the trajectory command using a PathPlanner trajectory.
+   * @return ramseteCommand
+   */
+  public Command trajectoryCommand(PathPlannerTrajectory trajectory) {
+    PPRamseteCommand ramseteCommand = new PPRamseteCommand(
+      trajectory, 
+      this::getPose, 
+      new RamseteController(),
+      CHASSIS.DRIVE_KINEMATICS,
+      this::tankDriveVolts,
+      this
+    );
+
+    return ramseteCommand;
   }
 }

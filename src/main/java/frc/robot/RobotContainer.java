@@ -6,11 +6,13 @@ package frc.robot;
 
 // Import required modules
 import frc.robot.Commands.Autos;
+import frc.robot.Constants.CHASSIS;
 import frc.robot.Constants.MECHANISM;
 import frc.robot.Constants.PERIPHERALS;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Mechanism;
 
+import com.pathplanner.lib.PathPlanner;
 import com.revrobotics.CANSparkMax.IdleMode;
 
 // Import required libraries
@@ -63,6 +65,7 @@ public class RobotContainer {
     autoChooser.addOption("Balance", balanceAuto);
     autoChooser.addOption("Score", scoreAuto);
     autoChooser.addOption("PathPlanner Auto", pathAuto);
+    autoChooser.addOption("PathPlanner Auto2", drivetrain.trajectoryCommand(PathPlanner.loadPath("TestPathA", CHASSIS.PATH_CONSTRAINTS)));
 
     SmartDashboard.putData("Autonomous Route", autoChooser);
   }
