@@ -11,6 +11,8 @@ import frc.robot.Constants.PERIPHERALS;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Mechanism;
 
+import com.revrobotics.CANSparkMax.IdleMode;
+
 // Import required libraries
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -90,6 +92,21 @@ public class RobotContainer {
     operatorController.povRight().onTrue(mechanism.setArmPreset(MECHANISM.TRANSPORT));
     operatorController.rightStick().onTrue(mechanism.setArmPreset(MECHANISM.STATION));
     operatorController.leftStick().onTrue(mechanism.setArmPreset(MECHANISM.DEFAULT));
+  }
+
+  /**
+   * HALTS all chassis motors
+   */
+  public void EMERGENCY_STOP() {
+    this.drivetrain.setBrakeMode(IdleMode.kBrake);
+    this.drivetrain.setDriveOutput(0);
+  }
+
+  /**
+   * Resets arm to default position
+   */
+  public void ARM_RESET() {
+    mechanism.setArmPreset(MECHANISM.DEFAULT).schedule();
   }
 
   /**

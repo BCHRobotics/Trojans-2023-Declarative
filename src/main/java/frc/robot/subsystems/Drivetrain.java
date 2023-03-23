@@ -183,7 +183,7 @@ public class Drivetrain extends SubsystemBase {
     return runOnce(() -> this.setBrakeMode(IdleMode.kCoast));
   }
 
-  private void setBrakeMode(IdleMode idleMode) {
+  public void setBrakeMode(IdleMode idleMode) {
     this.frontLeftMotor.setIdleMode(idleMode);
     this.frontRightMotor.setIdleMode(idleMode);
     this.backLeftMotor.setIdleMode(idleMode);
@@ -252,7 +252,7 @@ public class Drivetrain extends SubsystemBase {
    * 
    * @param percent linear motion [-1 --> 1] (Backwards --> Forward)
    */
-  private void setDriveOutput(double percent) {
+  public void setDriveOutput(double percent) {
     this.frontLeftMotor.set(percent);
     this.frontRightMotor.set(percent);
   }

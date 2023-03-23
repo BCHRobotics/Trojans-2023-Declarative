@@ -59,6 +59,7 @@ public class Robot extends TimedRobot {
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
+    robotContainer.EMERGENCY_STOP();
   }
 
   @Override
@@ -89,6 +90,7 @@ public class Robot extends TimedRobot {
     if (autonomousCommand != null) {
       autonomousCommand.cancel();
     }
+    robotContainer.ARM_RESET();
   }
 
   /** This function is called periodically during operator control. */
