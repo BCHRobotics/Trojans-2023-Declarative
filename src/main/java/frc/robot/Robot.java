@@ -58,7 +58,10 @@ public class Robot extends TimedRobot {
     // robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
-    SmartDashboard.putNumberArray("botpose", this.limelight.getBotPose());
+    SmartDashboard.putNumber("botposeX", this.limelight.getBotPose()[0]);
+    SmartDashboard.putNumber("botposeY", this.limelight.getBotPose()[1]);
+    SmartDashboard.putNumber("botposeZ", this.limelight.getBotPose()[2]);
+    SmartDashboard.putNumber("botposeYaw", this.limelight.getBotPose()[3]);
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
