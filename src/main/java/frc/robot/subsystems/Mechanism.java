@@ -103,9 +103,12 @@ public class Mechanism extends SubsystemBase {
    * @param angle
    */
   private void setShoulderAngle(double angle) {
-    if (MISC.WITHIN_TOLERANCE(this.getShoulderPosition(), angle, MECHANISM.SHOULDER_TOLERANCE))
+    if (MISC.WITHIN_TOLERANCE(this.getShoulderPosition(), angle,
+        MECHANISM.SHOULDER_TOLERANCE + 2)) {
+      if (angle <= MECHANISM.SHOULDER_DEFAULT_OFFSET)
+        this.shoulderMotor.disable();
       return;
-
+    }
     this.shoulderController.setSmartPosition(angle, MECHANISM.SHOULDER_DEFAULT_OFFSET, MECHANISM.SHOULDER_LIMIT);
   }
 

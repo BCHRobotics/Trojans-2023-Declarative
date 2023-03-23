@@ -27,12 +27,12 @@ public final class Constants {
     // "EWWW, Everything is in metric" -Mechancial Team 2023
 
     // TODO: Get values from sysId
-    public static final double kS = 0;
-    public static final double kV = 0;
-    public static final double kA = 0;
-    public static final double kP = 0;
+    public static final double kS = 0.23972;
+    public static final double kV = 1.6742;
+    public static final double kA = 0.86385;
+    public static final double kP = 0.0002827;
 
-    public static final double TRACK_WIDTH = 0.4826; // m
+    public static final double TRACK_WIDTH = 0.62766; // m
     public static final DifferentialDriveKinematics DRIVE_KINEMATICS = new DifferentialDriveKinematics(TRACK_WIDTH);
 
     public static final double TRAJECTORY_MAX_SPEED = 3; // m/s
@@ -65,9 +65,9 @@ public final class Constants {
     public static final double RIGHT_POSITION_CONVERSION = 48 / 18.14280891418457; // #inches / #revs
 
     public static final double LEFT_VELOCITY_CONVERSION = LEFT_POSITION_CONVERSION / 60.0; // inches per
-                                                                                           // second
+    // second
     public static final double RIGHT_VELOCITY_CONVERSION = RIGHT_POSITION_CONVERSION / 60.0; // #inches /
-                                                                                             // 1 sec
+    // 1 sec
 
     // input diameter = Δd inches between center wheels ~~v~~ in inches / degree
     public static final double TURNING_CONVERSION = (TRACK_WIDTH * Math.PI) / 360;
@@ -126,8 +126,8 @@ public final class Constants {
         0, 0, 5700, 3500, 0.2);
 
     public static final SparkMaxConstants WRIST_CONTROL_CONSTANTS = new SparkMaxConstants(
-        2.1028E-05, 0, 5.1398E-05, 0, 0.00004, -1, 0.5,
-        0, 0, 5700, 4500, 0.05);
+        2.1028E-05, 0, 5.1398E-05, 0, 0.00004, -1, 1,
+        0, 0, 5700, 5700, 0.05);
 
     // Arm preset profiles TODO: Verify Presets with Drive Team
     public static final ArmPresets DEFAULT = new ArmPresets(0, -90);

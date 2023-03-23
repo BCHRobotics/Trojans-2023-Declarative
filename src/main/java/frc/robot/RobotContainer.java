@@ -46,7 +46,7 @@ public class RobotContainer {
   private final Command scoreAuto = Autos.scoreTwoPieces(drivetrain, mechanism);
   private final Command exampleAuto = Autos.PathPlannedAuto(drivetrain);
   private final Command plannerAuto = Autos.followTrajectoryCommand(drivetrain,
-      PathPlanner.loadPath("Example A", new PathConstraints(4, 3)), true);
+      PathPlanner.loadPath("TestPathD", new PathConstraints(3, 1)), true);
 
   // A chooser for autonomous commands
   SendableChooser<Command> autoChooser = new SendableChooser<>();
