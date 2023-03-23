@@ -8,6 +8,7 @@ import frc.robot.Constants.CHASSIS;
 import frc.robot.Constants.MISC;
 import frc.robot.Constants.PERIPHERALS;
 import frc.robot.util.Gyro;
+import frc.robot.util.imaging.Limelight;
 import frc.robot.util.control.PID;
 import frc.robot.util.control.SparkMaxPID;
 
@@ -39,7 +40,7 @@ public class Drivetrain extends SubsystemBase {
   private final CANSparkMax backRightMotor;
 
   private final RelativeEncoder leftEncoder;
-  private final RelativeEncoder righEncoder;
+  private final RelativeEncoder rightEncoder;
 
   private final SparkMaxPID leftMotorController;
   private final SparkMaxPID rightMotorController;
@@ -50,6 +51,7 @@ public class Drivetrain extends SubsystemBase {
   // Objects for gyroscope odometry and balancing
   private final Gyro gyro;
   private final PID gyroPid;
+  private final Limelight limelight;
 
   /** Creates a new Drive subsystem. */
   public Drivetrain() {
@@ -81,19 +83,19 @@ public class Drivetrain extends SubsystemBase {
     this.backRightMotor.follow(this.frontRightMotor);
 
     this.leftEncoder = this.frontLeftMotor.getEncoder();
-    this.righEncoder = this.frontRightMotor.getEncoder();
+    this.rightEncoder = this.frontRightMotor.getEncoder();
 
     this.leftEncoder.setPositionConversionFactor(CHASSIS.LEFT_POSITION_CONVERSION);
-    this.righEncoder.setPositionConversionFactor(CHASSIS.RIGHT_POSITION_CONVERSION);
+    this.rightEncoder.setPositionConversionFactor(CHASSIS.RIGHT_POSITION_CONVERSION);
 
     this.leftEncoder.setVelocityConversionFactor(CHASSIS.LEFT_VELOCITY_CONVERSION);
-    this.righEncoder.setVelocityConversionFactor(CHASSIS.RIGHT_VELOCITY_CONVERSION);
+    this.rightEncoder.setVelocityConversionFactor(CHASSIS.RIGHT_VELOCITY_CONVERSION);
 
     this.leftMotorController = new SparkMaxPID(this.frontLeftMotor, CHASSIS.LEFT_DRIVE_CONSTANTS);
     this.rightMotorController = new SparkMaxPID(this.frontRightMotor, CHASSIS.RIGHT_DRIVE_CONSTANTS);
 
     this.leftMotorController.setFeedbackDevice(this.leftEncoder);
-    this.rightMotorController.setFeedbackDevice(this.righEncoder);
+    this.rightMotorController.setFeedbackDevice(this.rightEncoder);
 
     this.leftMotorController.setMotionProfileType(AccelStrategy.kTrapezoidal);
     this.rightMotorController.setMotionProfileType(AccelStrategy.kTrapezoidal);
@@ -103,6 +105,7 @@ public class Drivetrain extends SubsystemBase {
     // Objects for balancing
     this.gyro = new Gyro(CHASSIS.GYRO_PORT);
     this.gyroPid = new PID(CHASSIS.GYRO_CONSTANTS);
+    this.limelight = new Limelight();
 
     this.driveOdometry = new DifferentialDriveOdometry(this.gyro.getRotation2d(),
         Units.inchesToMeters(this.getLeftPosition()),
@@ -178,6 +181,21 @@ public class Drivetrain extends SubsystemBase {
         .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
   }
 
+
+  /**
+   * Returns a command that turns the bot to the nearest Apriltag
+   */
+  public CommandBase turnToApril(){
+    limelight.setPipeline(7);
+    return run(() -> {
+      this.setYaw(this.limelight.getTargetX());
+    }).until(this::LimelightArrived);
+  }
+
+  private boolean LimelightArrived(){
+    return MISC.WITHIN_TOLERANCE(this.limelight.getTargetX(), 2);
+  }
+
   /**
    * Returns a command that enables brake mode on the drivetrain.
    */
@@ -191,6 +209,12 @@ public class Drivetrain extends SubsystemBase {
   public CommandBase releaseBrakeMode() {
     return runOnce(() -> this.setBrakeMode(IdleMode.kCoast));
   }
+
+  public void setYaw(double angle){
+    double scaledValue = angle * CHASSIS.TURNING_CONVERSION;
+    this.setPosition(scaledValue, -scaledValue);
+  }
+  
 
   public void setBrakeMode(IdleMode idleMode) {
     this.frontLeftMotor.setIdleMode(idleMode);
@@ -296,7 +320,7 @@ public class Drivetrain extends SubsystemBase {
    * @return Right Position
    */
   public double getRightPosition() {
-    return this.righEncoder.getPosition();
+    return this.rightEncoder.getPosition();
   }
 
   /**
@@ -340,7 +364,7 @@ public class Drivetrain extends SubsystemBase {
    */
   public void resetEncoders() {
     this.leftEncoder.setPosition(0);
-    this.righEncoder.setPosition(0);
+    this.rightEncoder.setPosition(0);
   }
 
   /**

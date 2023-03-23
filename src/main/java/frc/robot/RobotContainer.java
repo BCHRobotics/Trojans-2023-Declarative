@@ -93,12 +93,16 @@ public class RobotContainer {
     driverController.leftBumper().whileTrue(
         drivetrain.enableBrakeMode().andThen(drivetrain.emergencyStop())).onFalse(drivetrain.releaseBrakeMode());
 
+    
+    driverController.a().onTrue(drivetrain.turnToApril());
+
     operatorController.povUp().onTrue(mechanism.setArmPreset(MECHANISM.TOP));
     operatorController.povLeft().onTrue(mechanism.setArmPreset(MECHANISM.MID));
     operatorController.povDown().onTrue(mechanism.setArmPreset(MECHANISM.GROUND));
     operatorController.povRight().onTrue(mechanism.setArmPreset(MECHANISM.TRANSPORT));
     operatorController.rightStick().onTrue(mechanism.setArmPreset(MECHANISM.STATION));
     operatorController.leftStick().onTrue(mechanism.setArmPreset(MECHANISM.DEFAULT));
+    
   }
 
   /**

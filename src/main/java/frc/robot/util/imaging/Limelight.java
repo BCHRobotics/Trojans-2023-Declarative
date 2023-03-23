@@ -30,8 +30,8 @@ public class Limelight {
         this.currentTarget = target;
     }
 
-    public void setPipeline() {
-        this.networkTable.getEntry("pipeline").setNumber(7);
+    public void setPipeline(int pipeline) {
+        this.networkTable.getEntry("pipeline").setNumber(pipeline);
     }
 
     public LimelightTargetType getDesiredTarget() {
@@ -89,6 +89,7 @@ public class Limelight {
      * @return distance to target
      */
     public double getTargetDistance() {
+        
         double a1 = MISC.LIMELIGHT_ANGLE; // Limelight mount angle
         double a2 = Math.abs(this.getTargetY()); // Limelight measured angle to target
         double aT = a1 + a2; // Total anlge in degrees
@@ -110,5 +111,4 @@ public class Limelight {
     public boolean reachedTargetX() {
         return (MISC.WITHIN_TOLERANCE(getTargetX(), MISC.LIMELIGHT_TOLERANCE));
     }
-
 }
