@@ -19,6 +19,7 @@ import com.revrobotics.CANSparkMax.IdleMode;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
@@ -95,6 +96,7 @@ public class RobotContainer {
 
     
     driverController.a().onTrue(drivetrain.turnToApril());
+    driverController.b().onTrue(Commands.runOnce(() -> drivetrain.resetEncoders()));
 
     operatorController.povUp().onTrue(mechanism.setArmPreset(MECHANISM.TOP));
     operatorController.povLeft().onTrue(mechanism.setArmPreset(MECHANISM.MID));
@@ -118,6 +120,11 @@ public class RobotContainer {
    */
   public void ARM_RESET() {
     mechanism.setArmPreset(MECHANISM.DEFAULT).schedule();
+  }
+
+    public void putDashboardValues(){
+    SmartDashboard.putNumber("left", drivetrain.getLeftPosition());
+    SmartDashboard.putNumber("right", drivetrain.getRightPosition());
   }
 
   /**

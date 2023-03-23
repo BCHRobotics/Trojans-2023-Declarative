@@ -186,14 +186,31 @@ public class Drivetrain extends SubsystemBase {
    * Returns a command that turns the bot to the nearest Apriltag
    */
   public CommandBase turnToApril(){
-    limelight.setPipeline(7);
     return run(() -> {
       this.setYaw(this.limelight.getTargetX());
-    }).until(this::LimelightArrived);
+    }).until(this::LimelightArrived).beforeStarting(this.enableBrakeMode()).beforeStarting(this::disableRampRate).beforeStarting(this::resetEncoders).beforeStarting(
+      () -> limelight.setPipeline(7))
+        .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
+  }
+
+  public CommandBase turnToApril2(){
+    return new PIDCommand(
+        new PIDController(0.0001, 0, 0),
+        // Close the loop on the turn rate
+        () -> this.limelight.getTargetX(),
+        // Setpoint is 0
+        0,
+        // Pipe the output to the turning controls
+        (output) -> this.setOutput(0, output),
+        // Require the robot drive
+        this).beforeStarting(this.enableBrakeMode()).beforeStarting(
+          () -> limelight.setPipeline(7)).beforeStarting(this::disableRampRate)
+        .beforeStarting(() -> this.setMaxOutput(1))
+        .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
   }
 
   private boolean LimelightArrived(){
-    return MISC.WITHIN_TOLERANCE(this.limelight.getTargetX(), 2);
+    return Math.abs(limelight.getTargetX())<=0;
   }
 
   /**
@@ -211,8 +228,9 @@ public class Drivetrain extends SubsystemBase {
   }
 
   public void setYaw(double angle){
-    double scaledValue = angle * CHASSIS.TURNING_CONVERSION;
-    this.setPosition(scaledValue, -scaledValue);
+    SmartDashboard.putNumber("angle", angle);
+    angle *= CHASSIS.TURNING_CONVERSION;
+    this.setPosition(angle + 2, -angle - 7);
   }
   
 
