@@ -170,10 +170,10 @@ public class Limelight {
             orderedLimitsArray[i] = limits[sortedIndices[i]];
         }
 
-        //Find intermdiary points
         ArrayList<Translation2d> intermediaryPoints = new ArrayList<Translation2d>();
         Line2D lineToTarget = new Line2D.Double(this.getBotPose()[0], this.getBotPose()[1], target.getX(), target.getY());
-
+        
+        //Find intermdiary points
         for(Rectangle2D limit : orderedLimitsArray) {
             //Continue adding points until the line between the most recently added point and the target no longer intersects the current limit
             //Shouldn't loop more than twice
