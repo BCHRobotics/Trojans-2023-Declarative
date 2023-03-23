@@ -11,6 +11,8 @@ import frc.robot.Constants.PERIPHERALS;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Mechanism;
 
+import com.pathplanner.lib.PathConstraints;
+import com.pathplanner.lib.PathPlanner;
 import com.revrobotics.CANSparkMax.IdleMode;
 
 // Import required libraries
@@ -42,6 +44,9 @@ public class RobotContainer {
   private final Command driveAuto = Autos.driveBack(drivetrain);
   private final Command balanceAuto = Autos.driveBackAndBalance(drivetrain);
   private final Command scoreAuto = Autos.scoreTwoPieces(drivetrain, mechanism);
+  private final Command exampleAuto = Autos.PathPlannedAuto(drivetrain);
+  private final Command plannerAuto = Autos.followTrajectoryCommand(drivetrain,
+      PathPlanner.loadPath("Example A", new PathConstraints(4, 3)), true);
 
   // A chooser for autonomous commands
   SendableChooser<Command> autoChooser = new SendableChooser<>();
@@ -61,6 +66,8 @@ public class RobotContainer {
     autoChooser.setDefaultOption("Drive Back", driveAuto);
     autoChooser.addOption("Balance", balanceAuto);
     autoChooser.addOption("Score", scoreAuto);
+    autoChooser.addOption("Example", exampleAuto);
+    autoChooser.addOption("Planner", plannerAuto);
 
     SmartDashboard.putData("Autonomous Route", autoChooser);
   }

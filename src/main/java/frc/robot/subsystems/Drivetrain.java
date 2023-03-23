@@ -12,6 +12,10 @@ import frc.robot.util.control.PID;
 import frc.robot.util.control.SparkMaxPID;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
+import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
@@ -41,10 +45,11 @@ public class Drivetrain extends SubsystemBase {
   private final SparkMaxPID rightMotorController;
 
   private final DifferentialDrive drive;
+  private final DifferentialDriveOdometry driveOdometry;
 
-  // Objects for gyroscope sensor fusion and balancing
-  private Gyro gyro;
-  private PID gyroPid;
+  // Objects for gyroscope odometry and balancing
+  private final Gyro gyro;
+  private final PID gyroPid;
 
   /** Creates a new Drive subsystem. */
   public Drivetrain() {
@@ -98,6 +103,10 @@ public class Drivetrain extends SubsystemBase {
     // Objects for balancing
     this.gyro = new Gyro(CHASSIS.GYRO_PORT);
     this.gyroPid = new PID(CHASSIS.GYRO_CONSTANTS);
+
+    this.driveOdometry = new DifferentialDriveOdometry(this.gyro.getRotation2d(),
+        Units.inchesToMeters(this.getLeftPosition()),
+        Units.inchesToMeters(this.getRightPosition()));
 
   }
 
@@ -220,7 +229,7 @@ public class Drivetrain extends SubsystemBase {
    * 
    * @param maxOutput in percent decimal
    */
-  private void setMaxOutput(double maxOutput) {
+  public void setMaxOutput(double maxOutput) {
     this.drive.setMaxOutput(maxOutput);
     SmartDashboard.putNumber("Max Drive Speed %", maxOutput * 100);
   }
@@ -344,9 +353,80 @@ public class Drivetrain extends SubsystemBase {
     this.backRightMotor.burnFlash();
   }
 
+  // Path planning methods
+
+  /**
+   * Returns the currently-estimated pose of the robot.
+   *
+   * @return The pose.
+   */
+  public Pose2d getPose() {
+    return this.driveOdometry.getPoseMeters();
+  }
+
+  /**
+   * Returns the current wheel speeds of the robot.
+   *
+   * @return The current wheel speeds.
+   */
+  public DifferentialDriveWheelSpeeds getWheelSpeeds() {
+    return new DifferentialDriveWheelSpeeds(Units.inchesToMeters(this.getLeftVelocity()),
+        Units.inchesToMeters(this.getRightVelocity()));
+  }
+
+  /**
+   * Resets the odometry to the specified pose.
+   *
+   * @param pose The pose to which to set the odometry.
+   */
+  public void resetOdometry(Pose2d pose) {
+    this.resetEncoders();
+    this.driveOdometry.resetPosition(
+        this.gyro.getRotation2d(), Units.inchesToMeters(this.getLeftPosition()),
+        Units.inchesToMeters(this.getRightPosition()), pose);
+  }
+
+  /**
+   * Controls the left and right sides of the drive directly with voltages.
+   *
+   * @param leftVolts  the commanded left output
+   * @param rightVolts the commanded right output
+   */
+  public void setVoltageOutput(double leftVolts, double rightVolts) {
+    this.frontLeftMotor.setVoltage(leftVolts);
+    this.frontRightMotor.setVoltage(rightVolts);
+    this.drive.feed();
+  }
+
+  /** Zeroes the heading of the robot. */
+  public void zeroHeading() {
+    this.gyro.reset();
+  }
+
+  /**
+   * Returns the heading of the robot.
+   *
+   * @return the robot's heading in degrees, from -180 to 180
+   */
+  public double getHeading() {
+    return this.gyro.getRotation2d().getDegrees();
+  }
+
+  /**
+   * Returns the turn rate of the robot.
+   *
+   * @return The turn rate of the robot, in degrees per second
+   */
+  public double getTurnRate() {
+    return -this.gyro.getRate();
+  }
+
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
+    this.driveOdometry.update(this.gyro.getRotation2d(), Units.inchesToMeters(this.getLeftPosition()),
+        Units.inchesToMeters(this.getRightPosition()));
+
     this.drive.feed();
 
     SmartDashboard.putNumber("Pitch", this.gyro.getPitch());

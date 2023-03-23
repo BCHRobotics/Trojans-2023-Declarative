@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.wpilibj.SerialPort;
 import frc.robot.util.control.ArmPresets;
 import frc.robot.util.control.PIDConstants;
@@ -22,6 +23,25 @@ import frc.robot.util.control.SparkMaxConstants;
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
+  public static final class PATHING {
+    // "EWWW, Everything is in metric" -Mechancial Team 2023
+
+    // TODO: Get values from sysId
+    public static final double kS = 0;
+    public static final double kV = 0;
+    public static final double kA = 0;
+    public static final double kP = 0;
+
+    public static final double TRACK_WIDTH = 0.4826; // m
+    public static final DifferentialDriveKinematics DRIVE_KINEMATICS = new DifferentialDriveKinematics(TRACK_WIDTH);
+
+    public static final double TRAJECTORY_MAX_SPEED = 3; // m/s
+    public static final double TRAJECTORY_MAX_ACCEL = 1; // m/s/s
+
+    public static final double RAMSETE_B = 2; // Default: 2
+    public static final double RAMSETE_ZETA = 0.7; // Default: 0.7
+  }
+
   public static final class CHASSIS {
     public static final int FRONT_LEFT_ID = 10;
     public static final int FRONT_RIGHT_ID = 11;

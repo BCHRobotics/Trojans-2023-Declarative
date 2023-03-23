@@ -4,10 +4,28 @@
 
 package frc.robot.Commands;
 
+import java.util.List;
+
+import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.commands.PPRamseteCommand;
+
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.RamseteController;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.math.trajectory.TrajectoryConfig;
+import edu.wpi.first.math.trajectory.TrajectoryGenerator;
+import edu.wpi.first.math.trajectory.constraint.DifferentialDriveVoltageConstraint;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import frc.robot.Constants.MECHANISM;
+import frc.robot.Constants.PATHING;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Mechanism;
 
@@ -89,6 +107,100 @@ public final class Autos {
 
         // Balance the robot
         drive.balance()).beforeStarting(drive::resetEncoders);
+  }
+
+  /**
+   * An Incomprehnsible level autonomous routine that smoothly controls a
+   * differential drive robot using path planning and trajectories
+   * 
+   * @return Autonomous command
+   */
+  public static Command PathPlannedAuto(Drivetrain drive) {
+    // Create a voltage constraint to ensure we don't accelerate too fast
+    var autoVoltageConstraint = new DifferentialDriveVoltageConstraint(
+        new SimpleMotorFeedforward(
+            PATHING.kS,
+            PATHING.kV,
+            PATHING.kA),
+        PATHING.DRIVE_KINEMATICS,
+        10);
+
+    // Create config for trajectory
+    TrajectoryConfig config = new TrajectoryConfig(
+        PATHING.TRAJECTORY_MAX_SPEED,
+        PATHING.TRAJECTORY_MAX_ACCEL)
+        // Add kinematics to ensure max speed is actually obeyed
+        .setKinematics(PATHING.DRIVE_KINEMATICS)
+        // Apply the voltage constraint
+        .addConstraint(autoVoltageConstraint);
+
+    // An example trajectory to follow. All units in meters.
+    Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
+        // Start at the origin facing the +X direction
+        new Pose2d(0, 0, new Rotation2d(0)),
+        // Pass through these two interior waypoints, making an 's' curve path
+        List.of(new Translation2d(1, 1), new Translation2d(2, -1)),
+        // End 3 meters straight ahead of where we started, facing forward
+        new Pose2d(3, 0, new Rotation2d(0)),
+        // Pass config
+        config);
+
+    RamseteCommand ramseteCommand = new RamseteCommand(
+        exampleTrajectory,
+        drive::getPose,
+        new RamseteController(PATHING.RAMSETE_B, PATHING.RAMSETE_ZETA),
+        new SimpleMotorFeedforward(
+            PATHING.kS,
+            PATHING.kV,
+            PATHING.kA),
+        PATHING.DRIVE_KINEMATICS,
+        drive::getWheelSpeeds,
+        new PIDController(PATHING.kP, 0, 0),
+        new PIDController(PATHING.kP, 0, 0),
+        // RamseteCommand passes volts to the callback
+        drive::setVoltageOutput,
+        drive);
+
+    // Reset odometry to the starting pose of the trajectory.
+    drive.resetOdometry(exampleTrajectory.getInitialPose());
+
+    // Run path following command, then stop at the end.
+    return ramseteCommand.andThen(() -> drive.setVoltageOutput(0, 0));
+  }
+
+  /**
+   * Assuming this method is part of a drivetrain subsystem that provides the
+   * necessary methods
+   */
+  public static Command followTrajectoryCommand(Drivetrain drive, PathPlannerTrajectory traj, boolean isFirstPath) {
+    return Commands.sequence(
+        new InstantCommand(() -> {
+          // Reset odometry for the first path you run during auto
+          if (isFirstPath) {
+            drive.resetOdometry(traj.getInitialPose());
+          }
+        }),
+        new PPRamseteCommand(
+            traj,
+            drive::getPose, // Pose supplier
+            new RamseteController(
+                PATHING.RAMSETE_B,
+                PATHING.RAMSETE_ZETA),
+            new SimpleMotorFeedforward(
+                PATHING.kS,
+                PATHING.kV,
+                PATHING.kA),
+            PATHING.DRIVE_KINEMATICS, // DifferentialDriveKinematics
+            drive::getWheelSpeeds, // DifferentialDriveWheelSpeeds supplier
+            new PIDController(PATHING.kP, 0, 0), // Left controller. Tune these values for your robot. Leaving them 0
+                                                 // will only
+            // use feedforwards.
+            new PIDController(PATHING.kP, 0, 0), // Right controller (usually the same values as left controller)
+            drive::setVoltageOutput, // Voltage biconsumer
+            true, // Should the path be automatically mirrored depending on alliance color.
+                  // Optional, defaults to true
+            drive // Requires this drive subsystem
+        ));
   }
 
   private Autos() {
