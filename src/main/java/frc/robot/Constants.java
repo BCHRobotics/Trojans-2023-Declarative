@@ -4,7 +4,10 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.math.trajectory.TrajectoryConfig;
+import edu.wpi.first.math.trajectory.constraint.DifferentialDriveVoltageConstraint;
 import edu.wpi.first.wpilibj.SerialPort;
 import frc.robot.util.control.ArmPresets;
 import frc.robot.util.control.PIDConstants;
@@ -40,6 +43,22 @@ public final class Constants {
 
     public static final double RAMSETE_B = 2; // Default: 2
     public static final double RAMSETE_ZETA = 0.7; // Default: 0.7
+
+    public static final TrajectoryConfig PATH_CONFIG = new TrajectoryConfig(
+      TRAJECTORY_MAX_SPEED,
+      TRAJECTORY_MAX_ACCEL)
+      // Add kinematics to ensure max speed is actually obeyed
+      .setKinematics(DRIVE_KINEMATICS)
+      // Apply the voltage constraint
+      .addConstraint(
+        new DifferentialDriveVoltageConstraint(
+          new SimpleMotorFeedforward(
+              kS,
+              kV,
+              kA),
+          DRIVE_KINEMATICS,
+          10)
+      );
   }
 
   public static final class CHASSIS {

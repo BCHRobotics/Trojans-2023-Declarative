@@ -14,11 +14,8 @@ import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
-import edu.wpi.first.math.trajectory.constraint.DifferentialDriveVoltageConstraint;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -28,6 +25,7 @@ import frc.robot.Constants.MECHANISM;
 import frc.robot.Constants.PATHING;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Mechanism;
+import frc.robot.util.imaging.LimelightHelpers;
 
 /** Container for auto command factories. */
 public final class Autos {
@@ -110,43 +108,13 @@ public final class Autos {
   }
 
   /**
-   * An Incomprehnsible level autonomous routine that smoothly controls a
-   * differential drive robot using path planning and trajectories
+   * Uses ramseteCommand to follow a specified trajectory
    * 
    * @return Autonomous command
    */
-  public static Command PathPlannedAuto(Drivetrain drive) {
-    // Create a voltage constraint to ensure we don't accelerate too fast
-    var autoVoltageConstraint = new DifferentialDriveVoltageConstraint(
-        new SimpleMotorFeedforward(
-            PATHING.kS,
-            PATHING.kV,
-            PATHING.kA),
-        PATHING.DRIVE_KINEMATICS,
-        10);
-
-    // Create config for trajectory
-    TrajectoryConfig config = new TrajectoryConfig(
-        PATHING.TRAJECTORY_MAX_SPEED,
-        PATHING.TRAJECTORY_MAX_ACCEL)
-        // Add kinematics to ensure max speed is actually obeyed
-        .setKinematics(PATHING.DRIVE_KINEMATICS)
-        // Apply the voltage constraint
-        .addConstraint(autoVoltageConstraint);
-
-    // An example trajectory to follow. All units in meters.
-    Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
-        // Start at the origin facing the +X direction
-        new Pose2d(0, 0, new Rotation2d(0)),
-        // Pass through these two interior waypoints, making an 's' curve path
-        List.of(new Translation2d(1, 1), new Translation2d(2, -1)),
-        // End 3 meters straight ahead of where we started, facing forward
-        new Pose2d(3, 0, new Rotation2d(0)),
-        // Pass config
-        config);
-
+  public static Command ramseteTrajectory(Drivetrain drive, Trajectory trajectory) {
     RamseteCommand ramseteCommand = new RamseteCommand(
-        exampleTrajectory,
+        trajectory,
         drive::getPose,
         new RamseteController(PATHING.RAMSETE_B, PATHING.RAMSETE_ZETA),
         new SimpleMotorFeedforward(
@@ -162,7 +130,7 @@ public final class Autos {
         drive);
 
     // Reset odometry to the starting pose of the trajectory.
-    drive.resetOdometry(exampleTrajectory.getInitialPose());
+    drive.resetOdometry(trajectory.getInitialPose());
 
     // Run path following command, then stop at the end.
     return ramseteCommand.andThen(() -> drive.setVoltageOutput(0, 0));
@@ -202,6 +170,30 @@ public final class Autos {
             drive // Requires this drive subsystem
         ));
   }
+
+  /**
+   * Uses botpose to go to an AprilTag
+   * 
+   * @return Autonomous command
+   */
+  public static Command goToAprilTag(Drivetrain drive) {
+    Pose2d aprilTagCoords = LimelightHelpers.getTargetPose3d_RobotSpace("limelight").toPose2d();
+
+    Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
+      // Start at the origin facing the +X direction
+      new Pose2d(0, 0, new Rotation2d(0)),
+      // Pass through no waypoints
+      List.of(),
+      // Pass Apriltag coordinates
+      aprilTagCoords,
+      // Pass config
+      PATHING.PATH_CONFIG
+    ); 
+
+    return ramseteTrajectory(drive, trajectory);
+  } 
+
+
 
   private Autos() {
     throw new UnsupportedOperationException("This is a utility class!");

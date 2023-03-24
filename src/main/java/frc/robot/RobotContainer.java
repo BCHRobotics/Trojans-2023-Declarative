@@ -44,7 +44,6 @@ public class RobotContainer {
   private final Command driveAuto = Autos.driveBack(drivetrain);
   private final Command balanceAuto = Autos.driveBackAndBalance(drivetrain);
   private final Command scoreAuto = Autos.scoreTwoPieces(drivetrain, mechanism);
-  private final Command exampleAuto = Autos.PathPlannedAuto(drivetrain);
   private final Command plannerAuto = Autos.followTrajectoryCommand(drivetrain,
       PathPlanner.loadPath("TestPathD", new PathConstraints(3, 1)), true);
 
@@ -66,7 +65,6 @@ public class RobotContainer {
     autoChooser.setDefaultOption("Drive Back", driveAuto);
     autoChooser.addOption("Balance", balanceAuto);
     autoChooser.addOption("Score", scoreAuto);
-    autoChooser.addOption("Example", exampleAuto);
     autoChooser.addOption("Planner", plannerAuto);
 
     SmartDashboard.putData("Autonomous Route", autoChooser);
@@ -89,6 +87,7 @@ public class RobotContainer {
         .onTrue(drivetrain.enableBrakeMode()).onFalse(drivetrain.releaseBrakeMode());
 
     driverController.y().whileTrue(drivetrain.balance());
+    driverController.a().onTrue(Autos.goToAprilTag(drivetrain));
 
     driverController.leftBumper().whileTrue(
         drivetrain.enableBrakeMode().andThen(drivetrain.emergencyStop())).onFalse(drivetrain.releaseBrakeMode());
