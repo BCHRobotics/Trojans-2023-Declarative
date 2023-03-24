@@ -139,8 +139,8 @@ public class Drivetrain extends SubsystemBase {
    */
   public CommandBase positionDriveCommand(double leftPos, double rightPos) {
     return runEnd(() -> {
-      this.setPosition(leftPos, rightPos);
-    }, this::emergencyStop).beforeStarting(this.enableBrakeMode()).beforeStarting(this.disableRampRate())
+      this.setPosition(leftPos * CHASSIS.TURNING_CONVERSION, rightPos * CHASSIS.TURNING_CONVERSION);
+    }, this::emergencyStop).beforeStarting(this.enableBrakeMode()).beforeStarting(() -> this.resetEncoders()).beforeStarting(this.disableRampRate())
         .beforeStarting(() -> this.setMaxOutput(1)).withName("positionDrive");
   }
 
@@ -186,7 +186,7 @@ public class Drivetrain extends SubsystemBase {
    * Returns a command that turns the bot to the nearest Apriltag
    */
   public CommandBase turnToApril(){
-    return run(() -> {
+    return runOnce(() -> {
       this.setYaw(this.limelight.getTargetX());
     }).until(this::LimelightArrived).beforeStarting(this.enableBrakeMode()).beforeStarting(this::disableRampRate).beforeStarting(this::resetEncoders).beforeStarting(
       () -> limelight.setPipeline(7))
@@ -229,8 +229,8 @@ public class Drivetrain extends SubsystemBase {
 
   public void setYaw(double angle){
     SmartDashboard.putNumber("angle", angle);
-    angle *= CHASSIS.TURNING_CONVERSION;
-    this.setPosition(angle + 2, -angle - 7);
+   // angle = 90* CHASSIS.TURNING_CONVERSION;
+    this.positionDriveCommand(angle, angle);
   }
   
 
