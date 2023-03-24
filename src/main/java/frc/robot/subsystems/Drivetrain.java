@@ -6,20 +6,26 @@ package frc.robot.subsystems;
 
 import frc.robot.Constants.CHASSIS;
 import frc.robot.Constants.MISC;
+import frc.robot.Constants.PATHING;
 import frc.robot.Constants.PERIPHERALS;
 import frc.robot.util.Gyro;
 import frc.robot.util.control.PID;
 import frc.robot.util.control.SparkMaxPID;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.RamseteController;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
+import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.PIDCommand;
+import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 
@@ -401,6 +407,35 @@ public class Drivetrain extends SubsystemBase {
   /** Zeroes the heading of the robot. */
   public void zeroHeading() {
     this.gyro.reset();
+  }
+
+  /**
+   * Uses ramseteCommand to follow a specified trajectory
+   * 
+   * @return Autonomous command
+   */
+  public Command ramseteTrajectory(Trajectory trajectory) {
+    RamseteCommand ramseteCommand = new RamseteCommand(
+        trajectory,
+        this::getPose,
+        new RamseteController(PATHING.RAMSETE_B, PATHING.RAMSETE_ZETA),
+        new SimpleMotorFeedforward(
+            PATHING.kS,
+            PATHING.kV,
+            PATHING.kA),
+        PATHING.DRIVE_KINEMATICS,
+        this::getWheelSpeeds,
+        new PIDController(PATHING.kP, 0, 0),
+        new PIDController(PATHING.kP, 0, 0),
+        // RamseteCommand passes volts to the callback
+        this::setVoltageOutput,
+        this);
+
+    // Reset odometry to the starting pose of the trajectory.
+    this.resetOdometry(trajectory.getInitialPose());
+
+    // Run path following command, then stop at the end.
+    return ramseteCommand.andThen(() -> this.setVoltageOutput(0, 0));
   }
 
   /**

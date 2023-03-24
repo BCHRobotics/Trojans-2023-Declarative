@@ -108,35 +108,6 @@ public final class Autos {
   }
 
   /**
-   * Uses ramseteCommand to follow a specified trajectory
-   * 
-   * @return Autonomous command
-   */
-  public static Command ramseteTrajectory(Drivetrain drive, Trajectory trajectory) {
-    RamseteCommand ramseteCommand = new RamseteCommand(
-        trajectory,
-        drive::getPose,
-        new RamseteController(PATHING.RAMSETE_B, PATHING.RAMSETE_ZETA),
-        new SimpleMotorFeedforward(
-            PATHING.kS,
-            PATHING.kV,
-            PATHING.kA),
-        PATHING.DRIVE_KINEMATICS,
-        drive::getWheelSpeeds,
-        new PIDController(PATHING.kP, 0, 0),
-        new PIDController(PATHING.kP, 0, 0),
-        // RamseteCommand passes volts to the callback
-        drive::setVoltageOutput,
-        drive);
-
-    // Reset odometry to the starting pose of the trajectory.
-    drive.resetOdometry(trajectory.getInitialPose());
-
-    // Run path following command, then stop at the end.
-    return ramseteCommand.andThen(() -> drive.setVoltageOutput(0, 0));
-  }
-
-  /**
    * Assuming this method is part of a drivetrain subsystem that provides the
    * necessary methods
    */
@@ -180,7 +151,7 @@ public final class Autos {
     Pose2d aprilTagCoords = LimelightHelpers.getTargetPose3d_RobotSpace("limelight").toPose2d();
 
     Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
-      // Start at the origin facing the +X direction
+      // Start at the origin
       new Pose2d(0, 0, new Rotation2d(0)),
       // Pass through no waypoints
       List.of(),
@@ -190,7 +161,7 @@ public final class Autos {
       PATHING.PATH_CONFIG
     ); 
 
-    return ramseteTrajectory(drive, trajectory);
+    return drive.ramseteTrajectory(trajectory);
   } 
 
 

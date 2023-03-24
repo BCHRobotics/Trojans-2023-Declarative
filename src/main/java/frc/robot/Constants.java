@@ -38,8 +38,8 @@ public final class Constants {
     public static final double TRACK_WIDTH = 0.62766; // m
     public static final DifferentialDriveKinematics DRIVE_KINEMATICS = new DifferentialDriveKinematics(TRACK_WIDTH);
 
-    public static final double TRAJECTORY_MAX_SPEED = 3; // m/s
-    public static final double TRAJECTORY_MAX_ACCEL = 1; // m/s/s
+    public static final double TRAJECTORY_MAX_SPEED = 1.5; // m/s
+    public static final double TRAJECTORY_MAX_ACCEL = 0.5; // m/s/s
 
     public static final double RAMSETE_B = 2; // Default: 2
     public static final double RAMSETE_ZETA = 0.7; // Default: 0.7
