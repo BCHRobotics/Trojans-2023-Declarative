@@ -51,6 +51,7 @@ public class Drivetrain extends SubsystemBase {
   // Objects for gyroscope odometry and balancing
   private final Gyro gyro;
   private final PID gyroPid;
+  private final PID seekPid;
   private final Limelight limelight;
 
   /** Creates a new Drive subsystem. */
@@ -105,6 +106,7 @@ public class Drivetrain extends SubsystemBase {
     // Objects for balancing
     this.gyro = new Gyro(CHASSIS.GYRO_PORT);
     this.gyroPid = new PID(CHASSIS.GYRO_CONSTANTS);
+    this.seekPid = new PID(CHASSIS.SEEK_CONSTANTS);
     this.limelight = new Limelight();
 
     this.driveOdometry = new DifferentialDriveOdometry(this.gyro.getRotation2d(),
@@ -140,20 +142,55 @@ public class Drivetrain extends SubsystemBase {
   public CommandBase positionDriveCommand(double leftPos, double rightPos) {
     return runEnd(() -> {
       this.setPosition(leftPos * CHASSIS.TURNING_CONVERSION, rightPos * CHASSIS.TURNING_CONVERSION);
-    }, this::emergencyStop).beforeStarting(this.enableBrakeMode()).beforeStarting(this.disableRampRate())
+    }, this::emergencyStop).until(() -> {
+      return MISC.WITHIN_TOLERANCE(this.getLeftPosition(), leftPos, CHASSIS.TOLERANCE) &&
+          MISC.WITHIN_TOLERANCE(this.getRightPosition(), rightPos, CHASSIS.TOLERANCE);
+    }).beforeStarting(this.enableBrakeMode()).beforeStarting(this.disableRampRate())
         .beforeStarting(() -> this.setMaxOutput(1)).withName("positionDrive");
   }
-  
+
   public CommandBase turnToApril3(double aprilTagAngle) {
     return runEnd(() -> {
       this.setPosition(aprilTagAngle * CHASSIS.TURNING_CONVERSION, -aprilTagAngle * CHASSIS.TURNING_CONVERSION);
-    }, this::emergencyStop).beforeStarting(this.enableBrakeMode()).beforeStarting(() -> this.resetEncoders()).beforeStarting(this.disableRampRate())
+    }, this::emergencyStop).beforeStarting(this.enableBrakeMode()).beforeStarting(() -> this.resetEncoders())
+        .beforeStarting(this.disableRampRate())
         .beforeStarting(() -> this.setMaxOutput(1)).withName("aprilPositionDrive");
   }
 
-  public CommandBase turnToApril4(double aprilTagAngle) {
-    return this.positionDriveCommand(aprilTagAngle, -aprilTagAngle).beforeStarting(this::resetEncoders).beforeStarting(
-      () -> limelight.setPipeline(7));
+  public CommandBase turnToApril4() {
+    return this.positionDriveCommand(limelight.getTargetX(), -limelight.getTargetX())
+        .beforeStarting(this::resetEncoders).beforeStarting(
+            () -> limelight.setPipeline(7));
+  }
+
+  public CommandBase turnToApril5() {
+    return startEnd(() -> {
+      this.setPosition(limelight.getTargetX() * CHASSIS.TURNING_CONVERSION,
+          -limelight.getTargetX() * CHASSIS.TURNING_CONVERSION);
+    }, this::emergencyStop)
+        .until(this::limelightArrived)
+        .beforeStarting(this::enableBrakeMode)
+        .beforeStarting(this::disableRampRate)
+        .beforeStarting(this::resetEncoders)
+        .beforeStarting(() -> this.setMaxOutput(1))
+        .withName("aprilTagHunting");
+  }
+
+  public CommandBase turnToApril6() {
+    return runEnd(() -> {
+      /**
+       * Uses PID to balance robot on charging station
+       */
+      this.seekPid.setTarget(0);
+      this.seekPid.referenceTimer();
+      this.seekPid.setInput(-this.limelight.getTargetX());
+      this.seekPid.calculate();
+      this.setDriveTurn(this.seekPid.getOutput());
+    }, this::resetPID).until(this::limelightArrived)
+        .beforeStarting(this.enableBrakeMode())
+        .beforeStarting(this.disableRampRate())
+        .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
+
   }
 
   public CommandBase balance() {
@@ -193,19 +230,19 @@ public class Drivetrain extends SubsystemBase {
         .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
   }
 
-
   /**
    * Returns a command that turns the bot to the nearest Apriltag
    */
-  public CommandBase turnToApril(){
+  public CommandBase turnToApril() {
     return runOnce(() -> {
       this.setYaw(this.limelight.getTargetX());
-    }).until(this::LimelightArrived).beforeStarting(this.enableBrakeMode()).beforeStarting(this::disableRampRate).beforeStarting(this::resetEncoders).beforeStarting(
-      () -> limelight.setPipeline(7))
+    }).until(this::limelightArrived).beforeStarting(this.enableBrakeMode()).beforeStarting(this::disableRampRate)
+        .beforeStarting(this::resetEncoders).beforeStarting(
+            () -> limelight.setPipeline(7))
         .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
   }
 
-  public CommandBase turnToApril2(){
+  public CommandBase turnToApril2() {
     return new PIDCommand(
         new PIDController(0.0001, 0, 0),
         // Close the loop on the turn rate
@@ -216,13 +253,14 @@ public class Drivetrain extends SubsystemBase {
         (output) -> this.setOutput(0, output),
         // Require the robot drive
         this).beforeStarting(this.enableBrakeMode()).beforeStarting(
-          () -> limelight.setPipeline(7)).beforeStarting(this::disableRampRate)
+            () -> limelight.setPipeline(7))
+        .beforeStarting(this::disableRampRate)
         .beforeStarting(() -> this.setMaxOutput(1))
         .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
   }
 
-  private boolean LimelightArrived(){
-    return Math.abs(limelight.getTargetX())<=0;
+  private boolean limelightArrived() {
+    return MISC.WITHIN_TOLERANCE(limelight.getTargetX(), 0, 0.2);
   }
 
   /**
@@ -239,12 +277,11 @@ public class Drivetrain extends SubsystemBase {
     return runOnce(() -> this.setBrakeMode(IdleMode.kCoast));
   }
 
-  public void setYaw(double angle){
+  public void setYaw(double angle) {
     SmartDashboard.putNumber("angle", angle);
-    //angle = 90* CHASSIS.TURNING_CONVERSION;
+    // angle = 90* CHASSIS.TURNING_CONVERSION;
     this.positionDriveCommand(angle, -angle);
   }
-  
 
   public void setBrakeMode(IdleMode idleMode) {
     this.frontLeftMotor.setIdleMode(idleMode);
@@ -321,6 +358,16 @@ public class Drivetrain extends SubsystemBase {
   }
 
   /**
+   * Sets motor output using arcade drive controls
+   * 
+   * @param percent rotational motion [-1 --> 1] (Left --> Right)
+   */
+  public void setDriveTurn(double percent) {
+    this.frontLeftMotor.set(percent);
+    this.frontRightMotor.set(-percent);
+  }
+
+  /**
    * Sets robot position in inches
    * 
    * @param left  position in inches
@@ -328,8 +375,11 @@ public class Drivetrain extends SubsystemBase {
    */
   public void setPosition(double left, double right) {
     if (MISC.WITHIN_TOLERANCE(this.getLeftPosition(), left, CHASSIS.TOLERANCE)
-        && MISC.WITHIN_TOLERANCE(this.getRightPosition(), right, CHASSIS.TOLERANCE))
+        && MISC.WITHIN_TOLERANCE(this.getRightPosition(), right, CHASSIS.TOLERANCE)) {
+      this.frontLeftMotor.disable();
+      this.frontRightMotor.disable();
       return;
+    }
 
     this.leftMotorController.setSmartPosition(left);
     this.rightMotorController.setSmartPosition(right);
@@ -473,6 +523,12 @@ public class Drivetrain extends SubsystemBase {
    */
   public double getTurnRate() {
     return -this.gyro.getRate();
+  }
+
+  public void resetPID() {
+    this.seekPid.resetError();
+    this.seekPid.resetTimer();
+    this.seekPid.clearPID();
   }
 
   @Override

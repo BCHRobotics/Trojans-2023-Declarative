@@ -52,7 +52,7 @@ public final class Constants {
     public static final double DEFAULT_OUTPUT = 0.75;
     public static final double OUTPUT_INTERVAL = 0.25;
     public static final double RAMP_RATE = 0.15; // s
-    public static final double TOLERANCE = 1; // in
+    public static final double TOLERANCE = 0.05; // in
     public static final boolean INVERTED = false;
 
     // Chassis dimensions needed
@@ -70,13 +70,13 @@ public final class Constants {
     // 1 sec
 
     // input diameter = Δd inches between center wheels ~~v~~ in inches / degree
-    public static final double TURNING_CONVERSION = (TRACK_WIDTH * Math.PI) / 360;
+    public static final double TURNING_CONVERSION = ((TRACK_WIDTH * Math.PI) / 360);
 
     // Drive PID Constants TODO: Re-tune Drivetrain PID
     public static final SparkMaxConstants LEFT_DRIVE_CONSTANTS = new SparkMaxConstants(
-        0.00012, 0, 0.0025, 0, 0.00005, -1, 1, 0, 0, 6000, 2000, 0.2);
+        0.00016, 0, 0.0022, 0, 0.00006, -1, 1, 0, 0, 6000, 3000, 0.05);
     public static final SparkMaxConstants RIGHT_DRIVE_CONSTANTS = new SparkMaxConstants(
-        0.00012, 0, 0.0025, 0, 0.00005, -1, 1, 0, 0, 6000, 2000, 0.2);
+        0.00016, 0, 0.0022, 0, 0.00006, -1, 1, 0, 0, 6000, 3000, 0.05);
 
     // Gyro constants
     public static final SerialPort.Port GYRO_PORT = SerialPort.Port.kMXP;
@@ -87,7 +87,7 @@ public final class Constants {
     public static final PIDConstants GYRO_CONSTANTS = new PIDConstants(0.007, 0.001, 0, 0);
 
     // Target seek PID Constants TODO: Tune seeking constants
-    public static final PIDConstants SEEK_CONSTANTS = new PIDConstants(0.00012, 0, 0.0025, 0.00005);
+    public static final PIDConstants SEEK_CONSTANTS = new PIDConstants(0.005, 0, 0, 0.1);
   }
 
   public static final class MECHANISM {

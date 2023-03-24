@@ -96,9 +96,11 @@ public class RobotContainer {
     driverController.leftBumper().whileTrue(
         drivetrain.enableBrakeMode().andThen(drivetrain.emergencyStop())).onFalse(drivetrain.releaseBrakeMode());
 
-    
-    driverController.a().onTrue(drivetrain.turnToApril3(limelight.getTargetX()));
-    driverController.b().onTrue(Commands.runOnce(() -> drivetrain.resetEncoders()));
+    driverController.a().onTrue(drivetrain.turnToApril6());
+    driverController.b().onTrue(Commands.runOnce(() -> {
+      drivetrain.resetEncoders();
+      drivetrain.resetPID();
+    }));
 
     operatorController.povUp().onTrue(mechanism.setArmPreset(MECHANISM.TOP));
     operatorController.povLeft().onTrue(mechanism.setArmPreset(MECHANISM.MID));
@@ -106,7 +108,7 @@ public class RobotContainer {
     operatorController.povRight().onTrue(mechanism.setArmPreset(MECHANISM.TRANSPORT));
     operatorController.rightStick().onTrue(mechanism.setArmPreset(MECHANISM.STATION));
     operatorController.leftStick().onTrue(mechanism.setArmPreset(MECHANISM.DEFAULT));
-    
+
   }
 
   /**
@@ -124,7 +126,7 @@ public class RobotContainer {
     mechanism.setArmPreset(MECHANISM.DEFAULT).schedule();
   }
 
-    public void putDashboardValues(){
+  public void putDashboardValues() {
     SmartDashboard.putNumber("left", drivetrain.getLeftPosition());
     SmartDashboard.putNumber("right", drivetrain.getRightPosition());
   }
