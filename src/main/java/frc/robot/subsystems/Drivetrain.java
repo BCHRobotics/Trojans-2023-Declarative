@@ -140,8 +140,20 @@ public class Drivetrain extends SubsystemBase {
   public CommandBase positionDriveCommand(double leftPos, double rightPos) {
     return runEnd(() -> {
       this.setPosition(leftPos * CHASSIS.TURNING_CONVERSION, rightPos * CHASSIS.TURNING_CONVERSION);
-    }, this::emergencyStop).beforeStarting(this.enableBrakeMode()).beforeStarting(() -> this.resetEncoders()).beforeStarting(this.disableRampRate())
+    }, this::emergencyStop).beforeStarting(this.enableBrakeMode()).beforeStarting(this.disableRampRate())
         .beforeStarting(() -> this.setMaxOutput(1)).withName("positionDrive");
+  }
+  
+  public CommandBase turnToApril3(double aprilTagAngle) {
+    return runEnd(() -> {
+      this.setPosition(aprilTagAngle * CHASSIS.TURNING_CONVERSION, -aprilTagAngle * CHASSIS.TURNING_CONVERSION);
+    }, this::emergencyStop).beforeStarting(this.enableBrakeMode()).beforeStarting(() -> this.resetEncoders()).beforeStarting(this.disableRampRate())
+        .beforeStarting(() -> this.setMaxOutput(1)).withName("aprilPositionDrive");
+  }
+
+  public CommandBase turnToApril4(double aprilTagAngle) {
+    return this.positionDriveCommand(aprilTagAngle, -aprilTagAngle).beforeStarting(this::resetEncoders).beforeStarting(
+      () -> limelight.setPipeline(7));
   }
 
   public CommandBase balance() {
@@ -229,8 +241,8 @@ public class Drivetrain extends SubsystemBase {
 
   public void setYaw(double angle){
     SmartDashboard.putNumber("angle", angle);
-   // angle = 90* CHASSIS.TURNING_CONVERSION;
-    this.positionDriveCommand(angle, angle);
+    //angle = 90* CHASSIS.TURNING_CONVERSION;
+    this.positionDriveCommand(angle, -angle);
   }
   
 
