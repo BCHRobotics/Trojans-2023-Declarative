@@ -175,13 +175,6 @@ public class Drivetrain extends SubsystemBase {
         .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
   }
 
-  /**
-   * Returns whether or not the robot is balanced
-   */
-  private boolean balanced() {
-    return MISC.WITHIN_TOLERANCE(this.gyro.getPitch(), 0, CHASSIS.GYRO_TOLERANCE);
-  }
-
   public Command seekAprilTag() {
     return new PIDCommand(
         new PIDController(
