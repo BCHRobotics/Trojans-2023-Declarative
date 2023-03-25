@@ -97,7 +97,6 @@ public class RobotContainer {
     driverController.a().onTrue(drivetrain.turnToApril());
     driverController.b().onTrue(Commands.runOnce(() -> {
       drivetrain.resetEncoders();
-      drivetrain.resetPID();
     }));
 
     operatorController.povUp().onTrue(mechanism.setArmPreset(MECHANISM.TOP));
@@ -113,7 +112,6 @@ public class RobotContainer {
    * HALTS all chassis motors
    */
   public void EMERGENCY_STOP() {
-    this.drivetrain.setBrakeMode(IdleMode.kBrake);
     this.drivetrain.setDriveOutput(0);
   }
 
@@ -122,11 +120,6 @@ public class RobotContainer {
    */
   public void ARM_RESET() {
     mechanism.setArmPreset(MECHANISM.DEFAULT).schedule();
-  }
-
-  public void putDashboardValues() {
-    SmartDashboard.putNumber("left", drivetrain.getLeftPosition());
-    SmartDashboard.putNumber("right", drivetrain.getRightPosition());
   }
 
   /**

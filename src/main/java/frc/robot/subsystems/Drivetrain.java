@@ -9,7 +9,6 @@ import frc.robot.Constants.MISC;
 import frc.robot.Constants.PERIPHERALS;
 import frc.robot.util.Gyro;
 import frc.robot.util.imaging.Limelight;
-import frc.robot.util.control.PID;
 import frc.robot.util.control.SparkMaxPID;
 
 import edu.wpi.first.math.controller.PIDController;
@@ -19,7 +18,7 @@ import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.PIDCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
@@ -31,7 +30,6 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.SparkMaxPIDController.AccelStrategy;
-
 public class Drivetrain extends SubsystemBase {
 
   private final CANSparkMax frontLeftMotor;
@@ -50,8 +48,6 @@ public class Drivetrain extends SubsystemBase {
 
   // Objects for gyroscope odometry and balancing
   private final Gyro gyro;
-  private final PID gyroPid;
-  private final PID seekPid;
   private final Limelight limelight;
 
   /** Creates a new Drive subsystem. */
@@ -105,8 +101,6 @@ public class Drivetrain extends SubsystemBase {
 
     // Objects for balancing
     this.gyro = new Gyro(CHASSIS.GYRO_PORT);
-    this.gyroPid = new PID(CHASSIS.GYRO_CONSTANTS);
-    this.seekPid = new PID(CHASSIS.SEEK_CONSTANTS);
     this.limelight = new Limelight();
 
     this.driveOdometry = new DifferentialDriveOdometry(this.gyro.getRotation2d(),
@@ -123,74 +117,49 @@ public class Drivetrain extends SubsystemBase {
    * @param min the commanded snail percentage
    * @param max the commanded turbo percentage
    */
-  public CommandBase arcadeDriveCommand(DoubleSupplier fwd, DoubleSupplier rot, DoubleSupplier min,
-      DoubleSupplier max) {
-    // A split-stick arcade command, with forward/backward controlled by the left
-    // hand, and turning controlled by the right.
+  public Command arcadeDriveCommand(DoubleSupplier fwd, DoubleSupplier rot, 
+                                    DoubleSupplier min, DoubleSupplier max) {
     return run(() -> {
       this.setMaxOutput(CHASSIS.DEFAULT_OUTPUT + (max.getAsDouble() * CHASSIS.OUTPUT_INTERVAL)
           - (min.getAsDouble() * CHASSIS.OUTPUT_INTERVAL));
       this.setOutput(fwd.getAsDouble(), rot.getAsDouble());
-    }).beforeStarting(() -> this.drive.setDeadband(PERIPHERALS.CONTROLLER_DEADBAND))
-        .beforeStarting(this::enableRampRate)
-        .withInterruptBehavior(InterruptionBehavior.kCancelSelf).withName("arcadeDrive");
+    })
+    .beforeStarting(() -> this.drive.setDeadband(PERIPHERALS.CONTROLLER_DEADBAND))
+    .beforeStarting(this::enableRampRate)
+    .withInterruptBehavior(InterruptionBehavior.kCancelSelf)
+    .withName("arcadeDrive");
   }
 
   /**
    * Sets drivetrain position in inches
    */
-  public CommandBase positionDriveCommand(double leftPos, double rightPos) {
-    return runEnd(() -> {
-      this.setPosition(leftPos * CHASSIS.TURNING_CONVERSION, rightPos * CHASSIS.TURNING_CONVERSION);
-    }, this::emergencyStop).until(() -> {
-      return MISC.WITHIN_TOLERANCE(this.getLeftPosition(), leftPos, CHASSIS.TOLERANCE) &&
-          MISC.WITHIN_TOLERANCE(this.getRightPosition(), rightPos, CHASSIS.TOLERANCE);
-    }).beforeStarting(this.enableBrakeMode()).beforeStarting(this.disableRampRate())
-        .beforeStarting(() -> this.setMaxOutput(1)).withName("positionDrive");
-  }
-
-  public CommandBase turnToApril() {
-    return runEnd(() -> {
-      /**
-       * Uses PID to balance robot on charging station
-       */
-      this.seekPid.setTarget(0);
-      this.seekPid.referenceTimer();
-      this.seekPid.setInput(-this.limelight.getTargetX());
-      this.seekPid.calculate();
-      this.setDriveTurn(this.seekPid.getOutput());
-    }, this::resetPID).until(this::limelightArrived)
-        .beforeStarting(this.enableBrakeMode())
-        .beforeStarting(this.disableRampRate())
-        .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
-
-  }
-
-  public CommandBase balance() {
-    return run(() -> {
-      /**
-       * Uses PID to balance robot on charging station
-       */
-      this.gyroPid.setTarget(0);
-      this.gyroPid.referenceTimer();
-      this.gyroPid.setInput(this.gyro.getPitch());
-      this.gyroPid.calculate();
-      this.setDriveOutput(this.gyroPid.getOutput());
-    }).until(this::balanced).beforeStarting(this.enableBrakeMode()).beforeStarting(this.disableRampRate())
-        .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
+  public Command positionDriveCommand(double leftPos, double rightPos) {
+    return startEnd(() -> {
+      this.setPosition(leftPos * CHASSIS.TURNING_CONVERSION, 
+      rightPos * CHASSIS.TURNING_CONVERSION);
+    }, 
+    this::emergencyStop)
+      .until(this::reachedPosition)
+      .beforeStarting(this::enableBrakeMode)
+      .beforeStarting(this::disableRampRate)
+      .beforeStarting(() -> this.setMaxOutput(1))
+      .withName("positionDrive");
   }
 
   /**
-   * Returns whether or not the robot is balanced
+   * Returns whether or not the robot has reached the desired position
    */
-  public boolean balanced() {
-    return MISC.WITHIN_TOLERANCE(this.gyro.getPitch(), 0,
-        CHASSIS.GYRO_TOLERANCE);
+  private boolean reachedPosition() {
+    return this.leftMotorController.reachedSetpoint(this.getLeftPosition(), CHASSIS.TOLERANCE) &&
+           this.rightMotorController.reachedSetpoint(this.getRightPosition(), CHASSIS.TOLERANCE);
   }
 
-  public CommandBase balance2() {
+  public Command balance() {
     return new PIDCommand(
-        new PIDController(0.007, 0.001, 0),
+        new PIDController(
+          CHASSIS.GYRO_CONSTANTS.kP,
+          CHASSIS.GYRO_CONSTANTS.kI,
+          CHASSIS.GYRO_CONSTANTS.kD),
         // Close the loop on the turn rate
         () -> this.gyro.getPitch(),
         // Setpoint is 0
@@ -198,30 +167,39 @@ public class Drivetrain extends SubsystemBase {
         // Pipe the output to the turning controls
         (output) -> this.setDriveOutput(output),
         // Require the robot drive
-        this).beforeStarting(this.enableBrakeMode()).beforeStarting(this.disableRampRate())
+        this)
+        .andThen(this::emergencyStop)
+        .beforeStarting(this::enableBrakeMode)
+        .beforeStarting(this::disableRampRate)
         .beforeStarting(() -> this.setMaxOutput(1))
         .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
   }
 
-  private boolean limelightArrived() {
-    return MISC.WITHIN_TOLERANCE(limelight.getTargetX(), 0, 0.2);
+  /**
+   * Returns whether or not the robot is balanced
+   */
+  private boolean balanced() {
+    return MISC.WITHIN_TOLERANCE(this.gyro.getPitch(), 0, CHASSIS.GYRO_TOLERANCE);
   }
 
   /**
    * Returns a command that enables brake mode on the drivetrain.
    */
-  public CommandBase enableBrakeMode() {
+  public Command enableBrakeMode() {
     return runOnce(() -> this.setBrakeMode(IdleMode.kBrake));
   }
 
   /**
    * Returns a command that release brake mode on the drivetrain.
    */
-  public CommandBase releaseBrakeMode() {
+  public Command releaseBrakeMode() {
     return runOnce(() -> this.setBrakeMode(IdleMode.kCoast));
   }
 
-  public void setBrakeMode(IdleMode idleMode) {
+  /**
+   * sets the chassis brake mode
+   */
+  private void setBrakeMode(IdleMode idleMode) {
     this.frontLeftMotor.setIdleMode(idleMode);
     this.frontRightMotor.setIdleMode(idleMode);
     this.backLeftMotor.setIdleMode(idleMode);
@@ -233,14 +211,14 @@ public class Drivetrain extends SubsystemBase {
   /**
    * Returns a command that enables ramp rate on the drivetrain.
    */
-  public CommandBase enableRampRate() {
+  public Command enableRampRate() {
     return runOnce(() -> this.setRampRate(true));
   }
 
   /**
    * Returns a command that disables ramp rate on the drivetrain.
    */
-  public CommandBase disableRampRate() {
+  public Command disableRampRate() {
     return runOnce(() -> this.setRampRate(false));
   }
 
@@ -258,7 +236,7 @@ public class Drivetrain extends SubsystemBase {
    * 
    * @param maxOutput in percent decimal
    */
-  public void setMaxOutput(double maxOutput) {
+  private void setMaxOutput(double maxOutput) {
     this.drive.setMaxOutput(maxOutput);
     SmartDashboard.putNumber("Max Drive Speed %", maxOutput * 100);
   }
@@ -266,13 +244,15 @@ public class Drivetrain extends SubsystemBase {
   /**
    * Returns a command that stops the drivetrain its tracks.
    */
-  public CommandBase emergencyStop() {
-    return run(() -> {
+  public Command emergencyStop() {
+    return runOnce(() -> {
       this.frontLeftMotor.disable();
       this.frontRightMotor.disable();
       this.backLeftMotor.disable();
       this.backRightMotor.disable();
-    }).beforeStarting(this::enableBrakeMode).withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
+    })
+    .beforeStarting(this::enableBrakeMode)
+    .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
   }
 
   /**
@@ -281,7 +261,7 @@ public class Drivetrain extends SubsystemBase {
    * @param forward linear motion [-1 --> 1] (Backwards --> Forward)
    * @param rot     rotational motion [-1 --> 1] (L --> R)
    */
-  public void setOutput(double forward, double rot) {
+  private void setOutput(double forward, double rot) {
     this.drive.arcadeDrive(forward, rot);
   }
 
@@ -290,9 +270,11 @@ public class Drivetrain extends SubsystemBase {
    * 
    * @param percent linear motion [-1 --> 1] (Backwards --> Forward)
    */
-  public void setDriveOutput(double percent) {
+  public Command setDriveOutput(double percent) {
+    return runOnce(() -> {
     this.frontLeftMotor.set(percent);
     this.frontRightMotor.set(percent);
+    });
   }
 
   /**
@@ -300,7 +282,7 @@ public class Drivetrain extends SubsystemBase {
    * 
    * @param percent rotational motion [-1 --> 1] (Left --> Right)
    */
-  public void setDriveTurn(double percent) {
+  private void setDriveTurn(double percent) {
     this.frontLeftMotor.set(percent);
     this.frontRightMotor.set(-percent);
   }
@@ -311,7 +293,7 @@ public class Drivetrain extends SubsystemBase {
    * @param left  position in inches
    * @param right position in inches
    */
-  public void setPosition(double left, double right) {
+  private void setPosition(double left, double right) {
     if (MISC.WITHIN_TOLERANCE(this.getLeftPosition(), left, CHASSIS.TOLERANCE)
         && MISC.WITHIN_TOLERANCE(this.getRightPosition(), right, CHASSIS.TOLERANCE)) {
       this.frontLeftMotor.disable();
@@ -328,7 +310,7 @@ public class Drivetrain extends SubsystemBase {
    * 
    * @return Left Position
    */
-  public double getLeftPosition() {
+  private double getLeftPosition() {
     return this.leftEncoder.getPosition();
   }
 
@@ -337,7 +319,7 @@ public class Drivetrain extends SubsystemBase {
    * 
    * @return Right Position
    */
-  public double getRightPosition() {
+  private double getRightPosition() {
     return this.rightEncoder.getPosition();
   }
 
@@ -355,7 +337,7 @@ public class Drivetrain extends SubsystemBase {
    * 
    * @return Left Velocity
    */
-  public double getLeftVelocity() {
+  private double getLeftVelocity() {
     return this.leftEncoder.getVelocity();
   }
 
@@ -364,7 +346,7 @@ public class Drivetrain extends SubsystemBase {
    * 
    * @return Left Velocity
    */
-  public double getRightVelocity() {
+  private double getRightVelocity() {
     return this.leftEncoder.getVelocity();
   }
 
@@ -435,6 +417,7 @@ public class Drivetrain extends SubsystemBase {
    * @param rightVolts the commanded right output
    */
   public void setVoltageOutput(double leftVolts, double rightVolts) {
+    
     this.frontLeftMotor.setVoltage(leftVolts);
     this.frontRightMotor.setVoltage(rightVolts);
     this.drive.feed();
@@ -463,12 +446,6 @@ public class Drivetrain extends SubsystemBase {
     return -this.gyro.getRate();
   }
 
-  public void resetPID() {
-    this.seekPid.resetError();
-    this.seekPid.resetTimer();
-    this.seekPid.clearPID();
-  }
-
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
@@ -478,5 +455,7 @@ public class Drivetrain extends SubsystemBase {
     this.drive.feed();
 
     SmartDashboard.putNumber("Pitch", this.gyro.getPitch());
+    SmartDashboard.putNumber("left", this.getLeftPosition());
+    SmartDashboard.putNumber("right", this.getRightPosition());
   }
 }
