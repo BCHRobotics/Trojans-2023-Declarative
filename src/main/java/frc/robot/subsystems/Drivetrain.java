@@ -149,34 +149,7 @@ public class Drivetrain extends SubsystemBase {
         .beforeStarting(() -> this.setMaxOutput(1)).withName("positionDrive");
   }
 
-  public CommandBase turnToApril3(double aprilTagAngle) {
-    return runEnd(() -> {
-      this.setPosition(aprilTagAngle * CHASSIS.TURNING_CONVERSION, -aprilTagAngle * CHASSIS.TURNING_CONVERSION);
-    }, this::emergencyStop).beforeStarting(this.enableBrakeMode()).beforeStarting(() -> this.resetEncoders())
-        .beforeStarting(this.disableRampRate())
-        .beforeStarting(() -> this.setMaxOutput(1)).withName("aprilPositionDrive");
-  }
-
-  public CommandBase turnToApril4() {
-    return this.positionDriveCommand(limelight.getTargetX(), -limelight.getTargetX())
-        .beforeStarting(this::resetEncoders).beforeStarting(
-            () -> limelight.setPipeline(7));
-  }
-
-  public CommandBase turnToApril5() {
-    return startEnd(() -> {
-      this.setPosition(limelight.getTargetX() * CHASSIS.TURNING_CONVERSION,
-          -limelight.getTargetX() * CHASSIS.TURNING_CONVERSION);
-    }, this::emergencyStop)
-        .until(this::limelightArrived)
-        .beforeStarting(this::enableBrakeMode)
-        .beforeStarting(this::disableRampRate)
-        .beforeStarting(this::resetEncoders)
-        .beforeStarting(() -> this.setMaxOutput(1))
-        .withName("aprilTagHunting");
-  }
-
-  public CommandBase turnToApril6() {
+  public CommandBase turnToApril() {
     return runEnd(() -> {
       /**
        * Uses PID to balance robot on charging station
@@ -230,35 +203,6 @@ public class Drivetrain extends SubsystemBase {
         .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
   }
 
-  /**
-   * Returns a command that turns the bot to the nearest Apriltag
-   */
-  public CommandBase turnToApril() {
-    return runOnce(() -> {
-      this.setYaw(this.limelight.getTargetX());
-    }).until(this::limelightArrived).beforeStarting(this.enableBrakeMode()).beforeStarting(this::disableRampRate)
-        .beforeStarting(this::resetEncoders).beforeStarting(
-            () -> limelight.setPipeline(7))
-        .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
-  }
-
-  public CommandBase turnToApril2() {
-    return new PIDCommand(
-        new PIDController(0.0001, 0, 0),
-        // Close the loop on the turn rate
-        () -> this.limelight.getTargetX(),
-        // Setpoint is 0
-        0,
-        // Pipe the output to the turning controls
-        (output) -> this.setOutput(0, output),
-        // Require the robot drive
-        this).beforeStarting(this.enableBrakeMode()).beforeStarting(
-            () -> limelight.setPipeline(7))
-        .beforeStarting(this::disableRampRate)
-        .beforeStarting(() -> this.setMaxOutput(1))
-        .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
-  }
-
   private boolean limelightArrived() {
     return MISC.WITHIN_TOLERANCE(limelight.getTargetX(), 0, 0.2);
   }
@@ -275,12 +219,6 @@ public class Drivetrain extends SubsystemBase {
    */
   public CommandBase releaseBrakeMode() {
     return runOnce(() -> this.setBrakeMode(IdleMode.kCoast));
-  }
-
-  public void setYaw(double angle) {
-    SmartDashboard.putNumber("angle", angle);
-    // angle = 90* CHASSIS.TURNING_CONVERSION;
-    this.positionDriveCommand(angle, -angle);
   }
 
   public void setBrakeMode(IdleMode idleMode) {

@@ -10,7 +10,6 @@ import frc.robot.Constants.MECHANISM;
 import frc.robot.Constants.PERIPHERALS;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Mechanism;
-import frc.robot.util.imaging.Limelight;
 
 import com.pathplanner.lib.PathConstraints;
 import com.pathplanner.lib.PathPlanner;
@@ -37,7 +36,6 @@ public class RobotContainer {
   // The robot's subsystems
   private final Drivetrain drivetrain = new Drivetrain();
   private final Mechanism mechanism = new Mechanism();
-  private final Limelight limelight = new Limelight();
 
   // The driver's controller
   CommandXboxController driverController = new CommandXboxController(PERIPHERALS.DRIVER_PORT);
@@ -96,7 +94,7 @@ public class RobotContainer {
     driverController.leftBumper().whileTrue(
         drivetrain.enableBrakeMode().andThen(drivetrain.emergencyStop())).onFalse(drivetrain.releaseBrakeMode());
 
-    driverController.a().onTrue(drivetrain.turnToApril6());
+    driverController.a().onTrue(drivetrain.turnToApril());
     driverController.b().onTrue(Commands.runOnce(() -> {
       drivetrain.resetEncoders();
       drivetrain.resetPID();
