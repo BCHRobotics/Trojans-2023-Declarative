@@ -94,7 +94,7 @@ public class RobotContainer {
     driverController.leftBumper().whileTrue(
         drivetrain.enableBrakeMode().andThen(drivetrain.emergencyStop())).onFalse(drivetrain.releaseBrakeMode());
 
-    driverController.a().onTrue(drivetrain.turnToApril());
+    driverController.a().onTrue(drivetrain.seekAprilTag());
     driverController.b().onTrue(Commands.runOnce(() -> {
       drivetrain.resetEncoders();
     }));

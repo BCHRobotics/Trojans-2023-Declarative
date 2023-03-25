@@ -182,6 +182,28 @@ public class Drivetrain extends SubsystemBase {
     return MISC.WITHIN_TOLERANCE(this.gyro.getPitch(), 0, CHASSIS.GYRO_TOLERANCE);
   }
 
+  public Command seekAprilTag() {
+    return new PIDCommand(
+        new PIDController(
+          CHASSIS.SEEK_CONSTANTS.kP,
+          CHASSIS.SEEK_CONSTANTS.kI,
+          CHASSIS.SEEK_CONSTANTS.kD),
+        // Close the loop on the turn rate
+        () -> this.limelight.getTargetX(),
+        // Setpoint is 0.5
+        0.5,
+        // Pipe the output to the turning controls
+        (output) -> this.setDriveTurn(output),
+        //require the drivetrain
+        this)
+        .andThen(this::emergencyStop)
+        .beforeStarting(this::resetEncoders)
+        .beforeStarting(this::enableBrakeMode)
+        .beforeStarting(this::disableRampRate)
+        .beforeStarting(() -> this.setMaxOutput(1))
+        .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
+  }
+
   /**
    * Returns a command that enables brake mode on the drivetrain.
    */
