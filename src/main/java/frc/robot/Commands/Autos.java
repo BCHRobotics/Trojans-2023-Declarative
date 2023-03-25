@@ -4,9 +4,17 @@
 
 package frc.robot.Commands;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
+import com.pathplanner.lib.PathConstraints;
+import com.pathplanner.lib.PathPlanner;
 import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.auto.PIDConstants;
+import com.pathplanner.lib.auto.RamseteAutoBuilder;
+import com.pathplanner.lib.commands.FollowPathWithEvents;
 import com.pathplanner.lib.commands.PPRamseteCommand;
 
 import edu.wpi.first.math.controller.PIDController;
@@ -20,7 +28,8 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RamseteCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.Constants.MECHANISM;
 import frc.robot.Constants.PATHING;
 import frc.robot.subsystems.Drivetrain;
@@ -148,21 +157,73 @@ public final class Autos {
    * @return Autonomous command
    */
   public static Command goToAprilTag(Drivetrain drive) {
-    Pose2d aprilTagCoords = LimelightHelpers.getTargetPose3d_RobotSpace("limelight").toPose2d();
-
+    Optional<Pose2d> aprilTagCoords = Optional.ofNullable(LimelightHelpers.getTargetPose3d_RobotSpace("limelight").toPose2d());
+    
     Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
       // Start at the origin
       new Pose2d(0, 0, new Rotation2d(0)),
       // Pass through no waypoints
       List.of(),
       // Pass Apriltag coordinates
-      aprilTagCoords,
+      aprilTagCoords.orElse(new Pose2d(0, 0, new Rotation2d(0))),
       // Pass config
       PATHING.PATH_CONFIG
     ); 
 
     return drive.ramseteTrajectory(trajectory);
   } 
+
+  public static Command loadPathAutos(Drivetrain drive, Mechanism mech) {
+    Map<String, Command> eventMap = new HashMap<>();
+    // eventMap.put("event1", mech.setArmPreset(MECHANISM.MID));
+    eventMap.put("event1", mech.setArmPreset(MECHANISM.MID).withTimeout(4));
+    RamseteAutoBuilder autoBuilder = new RamseteAutoBuilder(
+      drive::getPose,
+      drive::resetOdometry,
+      new RamseteController(PATHING.RAMSETE_B, PATHING.RAMSETE_ZETA),
+      PATHING.DRIVE_KINEMATICS,
+      new SimpleMotorFeedforward(
+        PATHING.kS,
+        PATHING.kV,
+        PATHING.kA),
+      drive::getWheelSpeeds,
+      new PIDConstants(PATHING.kP, 0, 0),
+      drive::setVoltageOutput, eventMap, drive
+    );
+
+    List<PathPlannerTrajectory> paths = PathPlanner.loadPathGroup("TestPathC", PATHING.TRAJECTORY_MAX_SPEED, PATHING.TRAJECTORY_MAX_ACCEL);
+
+
+    // Command autoTest = new SequentialCommandGroup(
+    //   new FollowPathWithEvents(
+    //     followTrajectoryCommand(drive, paths.get(0), true),
+    //     paths.get(0).getMarkers(), 
+    //     eventMap),
+    //   new WaitCommand(5),
+    //   new FollowPathWithEvents(
+    //     followTrajectoryCommand(drive, paths.get(1), false),
+    //     paths.get(1).getMarkers(), 
+    //     eventMap)
+    // );
+    // return autoTest;
+
+    // Command autoTest = new SequentialCommandGroup(
+    //   new FollowPathWithEvents(
+    //     followTrajectoryCommand(drive, paths.get(0), true),
+    //     paths.get(0).getMarkers(), 
+    //     eventMap),
+    //   mech.setArmPreset(MECHANISM.MID),
+    //   new FollowPathWithEvents(
+    //     followTrajectoryCommand(drive, paths.get(1), false),
+    //     paths.get(1).getMarkers(), 
+    //     eventMap)
+    // );
+    // return autoTest;
+
+
+    PathPlannerTrajectory trajectory = PathPlanner.loadPath("TestPathC", new PathConstraints(3, 1));
+    return autoBuilder.fullAuto(trajectory);
+  }
 
 
 

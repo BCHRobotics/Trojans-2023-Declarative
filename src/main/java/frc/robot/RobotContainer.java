@@ -66,6 +66,7 @@ public class RobotContainer {
     autoChooser.addOption("Balance", balanceAuto);
     autoChooser.addOption("Score", scoreAuto);
     autoChooser.addOption("Planner", plannerAuto);
+    autoChooser.addOption("ArmAuto", Autos.loadPathAutos(drivetrain, mechanism));
 
     SmartDashboard.putData("Autonomous Route", autoChooser);
   }
