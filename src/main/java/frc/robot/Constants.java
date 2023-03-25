@@ -7,7 +7,6 @@ package frc.robot;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.wpilibj.SerialPort;
 import frc.robot.util.control.ArmPresets;
-import frc.robot.util.control.PIDConstants;
 import frc.robot.util.control.SparkMaxConstants;
 
 /**
@@ -84,11 +83,17 @@ public final class Constants {
     public static final double GYRO_TOLERANCE = 0.8;
 
     // Gyro PID Constants TODO: Re-tune gyro
-    public static final PIDConstants GYRO_CONSTANTS = new PIDConstants(0.007, 0.001, 0, 0);
-
+    public static final class GYRO_CONSTANTS {
+      public static final double kP = 0.007;
+      public static final double kI = 0.001;
+      public static final double kD = 0;
+    }
     // Target seek PID Constants TODO: Tune seeking constants
-    public static final PIDConstants SEEK_CONSTANTS = new PIDConstants(0.005, 0, 0, 0.1);
-  }
+    public static final class SEEK_CONSTANTS {
+      public static final double kP = 0.005;
+      public static final double kI = 0;
+      public static final double kD = 0;
+    }}
 
   public static final class MECHANISM {
     // Robot arm CAN IDs
