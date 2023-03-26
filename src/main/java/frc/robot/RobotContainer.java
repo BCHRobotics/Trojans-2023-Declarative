@@ -53,21 +53,21 @@ public class RobotContainer {
   public RobotContainer() {
     // Set default commands
     // Control the drive with split-stick arcade controls
-    drivetrain.setDefaultCommand(
-        drivetrain.arcadeDriveCommand(
-            () -> -driverController.getLeftY(), () -> -driverController.getRightX(),
-            () -> driverController.getLeftTriggerAxis(), () -> driverController.getRightTriggerAxis()));
+    this.drivetrain.setDefaultCommand(
+        this.drivetrain.arcadeDriveCommand(
+            () -> -this.driverController.getLeftY(), () -> -this.driverController.getRightX(),
+            () -> this.driverController.getLeftTriggerAxis(), () -> this.driverController.getRightTriggerAxis()));
 
     configureBindings();
 
     // Add commands to the autonomous command chooser
-    autoChooser.setDefaultOption("Drive Back", driveAuto);
-    autoChooser.addOption("Balance", balanceAuto);
-    autoChooser.addOption("Score", scoreAuto);
-    autoChooser.addOption("Example", exampleAuto);
-    autoChooser.addOption("Planner", plannerAuto);
+    this.autoChooser.setDefaultOption("Drive Back", driveAuto);
+    this.autoChooser.addOption("Balance", balanceAuto);
+    this.autoChooser.addOption("Score", scoreAuto);
+    this.autoChooser.addOption("Example", exampleAuto);
+    this.autoChooser.addOption("Planner", plannerAuto);
 
-    SmartDashboard.putData("Autonomous Route", autoChooser);
+    SmartDashboard.putData("Autonomous Route", this.autoChooser);
   }
 
   /**
@@ -104,7 +104,8 @@ public class RobotContainer {
     this.operatorController.povRight().onTrue(this.mechanism.setArmPreset(MECHANISM.TRANSPORT));
     this.operatorController.rightStick().onTrue(this.mechanism.setArmPreset(MECHANISM.STATION));
     this.operatorController.leftStick().onTrue(this.mechanism.setArmPreset(MECHANISM.DEFAULT));
-
+    this.operatorController.leftBumper().whileTrue(this.mechanism.blinkCubeLED());
+    this.operatorController.rightBumper().whileTrue(this.mechanism.blinkConeLED());
   }
 
   /**

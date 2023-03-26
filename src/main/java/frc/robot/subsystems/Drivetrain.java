@@ -7,10 +7,9 @@ package frc.robot.subsystems;
 import frc.robot.Constants.CHASSIS;
 import frc.robot.Constants.MISC;
 import frc.robot.Constants.PERIPHERALS;
-import frc.robot.util.Gyro;
-import frc.robot.util.imaging.Limelight;
 import frc.robot.util.control.SparkMaxPID;
-
+import frc.robot.util.devices.Gyro;
+import frc.robot.util.devices.Limelight;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
@@ -101,8 +100,8 @@ public class Drivetrain extends SubsystemBase {
     this.drive = new DifferentialDrive(this.frontLeftMotor, this.frontRightMotor);
 
     // Objects for balancing
-    this.gyro = new Gyro(CHASSIS.GYRO_PORT);
-    this.limelight = new Limelight();
+    this.gyro = Gyro.getInstance();
+    this.limelight = Limelight.getInstance();
 
     this.driveOdometry = new DifferentialDriveOdometry(this.gyro.getRotation2d(),
         Units.inchesToMeters(this.getLeftPosition()),
@@ -166,14 +165,12 @@ public class Drivetrain extends SubsystemBase {
         // Setpoint is 0
         0,
         // Pipe the output to the turning controls
-        (output) -> this.setDriveOutput(output),
+        (output) -> this.setDriveStragiht(output),
         // Require the robot drive
         this)
         .andThen(this::emergencyStop)
         .beforeStarting(this::enableBrakeMode)
-        .beforeStarting(this::disableRampRate)
-        .beforeStarting(() -> this.setMaxOutput(1))
-        .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
+        .beforeStarting(this::disableRampRate);
   }
 
   public Command seekAprilTag() {
@@ -184,18 +181,16 @@ public class Drivetrain extends SubsystemBase {
             CHASSIS.SEEK_CONSTANTS.kD),
         // Close the loop on the turn rate
         this.limelight::getTargetX,
-        // Setpoint is 0.5
-        0.5,
+        // Setpoint is 0
+        0,
         // Pipe the output to the turning controls
         (output) -> this.setDriveTurn(output),
         // require the drivetrain
         this)
         .andThen(this::emergencyStop)
-        .beforeStarting(this::resetEncoders)
         .beforeStarting(this::enableBrakeMode)
         .beforeStarting(this::disableRampRate)
-        .beforeStarting(() -> this.setMaxOutput(1))
-        .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
+        .beforeStarting(this::resetEncoders);
   }
 
   /**
@@ -248,16 +243,6 @@ public class Drivetrain extends SubsystemBase {
   }
 
   /**
-   * Sets the drivetrain's maximum percent output
-   * 
-   * @param maxOutput in percent decimal
-   */
-  private void setMaxOutput(double maxOutput) {
-    this.drive.setMaxOutput(maxOutput);
-    SmartDashboard.putNumber("Max Drive Speed %", maxOutput * 100);
-  }
-
-  /**
    * Returns a command that stops the drivetrain its tracks.
    */
   public Command emergencyStop() {
@@ -287,7 +272,7 @@ public class Drivetrain extends SubsystemBase {
    * 
    * @param percent linear motion [-1 --> 1] (Backwards --> Forward)
    */
-  private void setDriveOutput(double percent) {
+  private void setDriveStragiht(double percent) {
     this.frontLeftMotor.set(percent);
     this.frontRightMotor.set(percent);
   }
@@ -300,6 +285,16 @@ public class Drivetrain extends SubsystemBase {
   private void setDriveTurn(double percent) {
     this.frontLeftMotor.set(percent);
     this.frontRightMotor.set(-percent);
+  }
+
+  /**
+   * Sets the drivetrain's maximum percent output
+   * 
+   * @param maxOutput in percent decimal
+   */
+  private void setMaxOutput(double maxOutput) {
+    this.drive.setMaxOutput(maxOutput);
+    SmartDashboard.putNumber("Max Drive Speed %", maxOutput * 100);
   }
 
   /**
@@ -432,7 +427,6 @@ public class Drivetrain extends SubsystemBase {
    * @param rightVolts the commanded right output
    */
   public void setVoltageOutput(double leftVolts, double rightVolts) {
-
     this.frontLeftMotor.setVoltage(leftVolts);
     this.frontRightMotor.setVoltage(rightVolts);
     this.drive.feed();
