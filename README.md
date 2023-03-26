@@ -1,6 +1,6 @@
 # FIRST Robotics Team 2386 - Trojans: 2023 Robot Code
 
-This is the 2023 robot code for Rapid React.
+This is the 2023 robot code for Charged Up.
 
 ## Getting Started
 
