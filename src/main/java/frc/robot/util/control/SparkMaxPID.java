@@ -13,6 +13,7 @@ public class SparkMaxPID {
 
     private SparkMaxPIDController pidController;
     private SparkMaxConstants constants;
+    private double setpoint;
 
     public SparkMaxPID(CANSparkMax motor) {
         pidController = motor.getPIDController();
@@ -112,28 +113,42 @@ public class SparkMaxPID {
         this.pidController.setSmartMotionAccelStrategy(strategy, this.constants.slot);
     }
 
-    public void setSmartPosition(double setPoint) {
-        this.pidController.setReference(setPoint, CANSparkMax.ControlType.kSmartMotion, this.constants.slot);
+    public void setSmartPosition(double position) {
+        this.setpoint = position;
+        this.pidController.setReference(position, CANSparkMax.ControlType.kSmartMotion, this.constants.slot);
     }
 
-    public void setSmartPosition(double setPoint, double min, double max) {
-        this.setSmartPosition(MISC.ENSURE_RANGE(setPoint, min, max));
+    public void setSmartPosition(double position, double min, double max) {
+        this.setpoint = position;
+        this.setSmartPosition(MISC.ENSURE_RANGE(position, min, max));
     }
 
-    public void setSmartVelocity(double setPoint) {
-        this.pidController.setReference(setPoint, CANSparkMax.ControlType.kSmartVelocity, this.constants.slot);
+    public void setSmartVelocity(double velocity) {
+        this.setpoint = velocity;
+        this.pidController.setReference(velocity, CANSparkMax.ControlType.kSmartVelocity, this.constants.slot);
     }
 
-    public void setPosition(double setPoint) {
-        this.pidController.setReference(setPoint, CANSparkMax.ControlType.kPosition, this.constants.slot);
+    public void setPosition(double position) {
+        this.setpoint = position;
+        this.pidController.setReference(position, CANSparkMax.ControlType.kPosition, this.constants.slot);
     }
 
-    public void setPosition(double setPoint, double min, double max) {
-        this.setPosition(MISC.ENSURE_RANGE(setPoint, min, max));
+    public void setPosition(double position, double min, double max) {
+        this.setpoint = position;
+        this.setPosition(MISC.ENSURE_RANGE(position, min, max));
     }
 
     public void setVelocity(double speed) {
+        this.setpoint = speed;
         this.pidController.setReference(speed, CANSparkMax.ControlType.kVelocity, this.constants.slot);
+    }
+
+    public double getSetpoint() {
+        return this.setpoint;
+    }
+
+    public boolean reachedSetpoint(double input, double tolerance) {
+        return MISC.WITHIN_TOLERANCE(input, this.setpoint, tolerance);
     }
 
 }

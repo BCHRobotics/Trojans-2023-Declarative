@@ -30,7 +30,7 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
     // Configure default commands and condition bindings on robot startup
-    robotContainer = new RobotContainer();
+    this.robotContainer = new RobotContainer();
   }
 
   /**
@@ -59,7 +59,7 @@ public class Robot extends TimedRobot {
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
-    robotContainer.EMERGENCY_STOP();
+    this.robotContainer.EMERGENCY_STOP();
   }
 
   @Override
@@ -68,11 +68,11 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    autonomousCommand = robotContainer.getAutonomousCommand();
+    this.autonomousCommand = this.robotContainer.getAutonomousCommand();
 
     // schedule the autonomous command (example)
-    if (autonomousCommand != null) {
-      autonomousCommand.schedule();
+    if (this.autonomousCommand != null) {
+      this.autonomousCommand.schedule();
     }
   }
 
@@ -87,10 +87,10 @@ public class Robot extends TimedRobot {
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
     // this line or comment it out.
-    if (autonomousCommand != null) {
-      autonomousCommand.cancel();
+    if (this.autonomousCommand != null) {
+      this.autonomousCommand.cancel();
     }
-    robotContainer.ARM_RESET();
+    this.robotContainer.ARM_RESET();
   }
 
   /** This function is called periodically during operator control. */

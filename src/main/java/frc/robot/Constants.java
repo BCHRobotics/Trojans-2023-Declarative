@@ -7,7 +7,6 @@ package frc.robot;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.wpilibj.SerialPort;
 import frc.robot.util.control.ArmPresets;
-import frc.robot.util.control.PIDConstants;
 import frc.robot.util.control.SparkMaxConstants;
 
 /**
@@ -35,8 +34,8 @@ public final class Constants {
     public static final double TRACK_WIDTH = 0.62766; // m
     public static final DifferentialDriveKinematics DRIVE_KINEMATICS = new DifferentialDriveKinematics(TRACK_WIDTH);
 
-    public static final double TRAJECTORY_MAX_SPEED = 3; // m/s
-    public static final double TRAJECTORY_MAX_ACCEL = 1; // m/s/s
+    public static final double MAX_SPEED = 3; // m/s
+    public static final double MAX_ACCEL = 1; // m/s/s
 
     public static final double RAMSETE_B = 2; // Default: 2
     public static final double RAMSETE_ZETA = 0.7; // Default: 0.7
@@ -50,33 +49,31 @@ public final class Constants {
 
     // Drivetrain restrictions
     public static final double DEFAULT_OUTPUT = 0.75;
-    public static final double OUTPUT_INTERVAL = 0.25;
+    public static final double OUTPUT_INTERVAL = 1.0 - DEFAULT_OUTPUT;
     public static final double RAMP_RATE = 0.15; // s
-    public static final double TOLERANCE = 1; // in
+    public static final double TOLERANCE = 0.05; // in
     public static final boolean INVERTED = false;
 
     // Chassis dimensions needed
     public static final double WHEEL_DIAMETER = 6;
-    public static final double TRACK_WIDTH = 19;
+    // public static final double TRACK_WIDTH = 19;
+    public static final double TRACK_WIDTH = PATHING.TRACK_WIDTH * 39.3701;
 
     // Chasis conversion factors TODO: Re-collect conversion data
-    public static final double LEFT_POSITION_CONVERSION = 48 / 18.23804473876953; // inches per
-    // revolutions
-    public static final double RIGHT_POSITION_CONVERSION = 48 / 18.14280891418457; // #inches / #revs
+    public static final double LEFT_POSITION_CONVERSION = 48 / 18.23804473876953; // inches / revs
+    public static final double RIGHT_POSITION_CONVERSION = 48 / 18.14280891418457; // inches / revs
 
-    public static final double LEFT_VELOCITY_CONVERSION = LEFT_POSITION_CONVERSION / 60.0; // inches per
-    // second
-    public static final double RIGHT_VELOCITY_CONVERSION = RIGHT_POSITION_CONVERSION / 60.0; // #inches /
-    // 1 sec
+    public static final double LEFT_VELOCITY_CONVERSION = LEFT_POSITION_CONVERSION / 60.0; // inches / s
+    public static final double RIGHT_VELOCITY_CONVERSION = RIGHT_POSITION_CONVERSION / 60.0; // inches / s
 
     // input diameter = Δd inches between center wheels ~~v~~ in inches / degree
-    public static final double TURNING_CONVERSION = (TRACK_WIDTH * Math.PI) / 360;
+    public static final double TURNING_CONVERSION = ((TRACK_WIDTH * Math.PI) / 360);
 
     // Drive PID Constants TODO: Re-tune Drivetrain PID
     public static final SparkMaxConstants LEFT_DRIVE_CONSTANTS = new SparkMaxConstants(
-        0.00012, 0, 0.0025, 0, 0.00005, -1, 1, 0, 0, 6000, 2000, 0.2);
+        0.00016, 0, 0.0022, 0, 0.00006, -1, 1, 0, 0, 6000, 3000, 0.05);
     public static final SparkMaxConstants RIGHT_DRIVE_CONSTANTS = new SparkMaxConstants(
-        0.00012, 0, 0.0025, 0, 0.00005, -1, 1, 0, 0, 6000, 2000, 0.2);
+        0.00016, 0, 0.0022, 0, 0.00006, -1, 1, 0, 0, 6000, 3000, 0.05);
 
     // Gyro constants
     public static final SerialPort.Port GYRO_PORT = SerialPort.Port.kMXP;
@@ -84,16 +81,25 @@ public final class Constants {
     public static final double GYRO_TOLERANCE = 0.8;
 
     // Gyro PID Constants TODO: Re-tune gyro
-    public static final PIDConstants GYRO_CONSTANTS = new PIDConstants(0.007, 0.001, 0, 0);
+    public static final class GYRO_CONSTANTS {
+      public static final double kP = 0.007;
+      public static final double kI = 0.001;
+      public static final double kD = 0;
+    }
 
     // Target seek PID Constants TODO: Tune seeking constants
-    public static final PIDConstants SEEK_CONSTANTS = new PIDConstants(0.00012, 0, 0.0025, 0.00005);
+    public static final class SEEK_CONSTANTS {
+      public static final double kP = 0.005;
+      public static final double kI = 0;
+      public static final double kD = 0;
+    }
   }
 
   public static final class MECHANISM {
     // Robot arm CAN IDs
     public static final int SHOULDER_ID = 20;
     public static final int WRIST_ID = 21;
+    public static final int CLAW_ID = 22;
 
     // Robot dimensions (inches)
     public static final double SHOULDER_HEIGHT = 36.75;
@@ -146,31 +152,47 @@ public final class Constants {
     public static final double CONTROLLER_DEADBAND = 0.1;
   }
 
-  public static final class MISC {
+  public static final class VISION {
+    public enum TARGET_TYPE {
+      CONE, CUBE, APRILTAG, GAMEPIECE, NOTHING
+    }
 
-    // Game piece actuator presets in degrees
-    public static final double CUBE_PRESET = 0.7;
-    public static final double CONE_PRESET = 1;
+    public static final int CUBE_PIPELINE = 0;
+    public static final int CONE_PIPELINE = 1;
+    public static final int APRILTAG_PIPELINE = 7;
+    public static final int NEURAL_NETWORK_PIPELINE = 4;
 
-    public static final int CUBE_LED_PORT = 1;
-    public static final int CONE_LED_PORT = 0;
-
-    public static final int BLINK_INTERVAL = 500; // milliseconds
-
-    // Limelight vision constants
     public static final double LIMELIGHT_ANGLE = 21.5; // degrees
     public static final double LIMELIGHT_HEIGHT = 91.25; // inches
     public static final double LIMELIGHT_TOLERANCE = 0.5; // degrees (x axis)
-    public static final double LIMELIGHT_CHASSIS_OFFSET = 16; // inches
+    public static final double LIMELIGHT_CHASSIS_OFFSET = 13; // inches
+
     public static final double CUBE_TARGET_HEIGHT = 4.75; // inches
+    public static final double CONE_TARGET_HEIGHT = 6.408; // inches
     public static final double APRILTAG_HEIGHT = 18.125; // inches
+  }
 
-    // CSV Test version
-    public static final int VERSION = 2;
-    public static final String TEACH_MODE_FILE_NAME = "LEAD_BY_NOSE" + "_" + VERSION;
+  public static final class MISC {
 
-    // Autonomous directory
-    public static final String ROOT_DIRECTORY = "csv/"; // "csv/";
+    public static final double CONE_PRESET = 1;
+    public static final double CUBE_PRESET = 0.7;
+
+    public static final int CONE_LED_PORT = 0;
+    public static final int CUBE_LED_PORT = 1;
+
+    public static final int GAMEPIECE_PROXIMITY = 800;
+
+    public static final double BLINK_INTERVAL = 0.5; // seconds
+
+    public static enum LED_STATE {
+      CONE,
+      CUBE,
+      BOTH,
+      CONE_BLINK,
+      CUBE_BLINK,
+      BOTH_BLINK,
+      OFF
+    }
 
     public static final double ENSURE_RANGE(double value, double min, double max) {
       return Math.min(Math.max(value, min), max);

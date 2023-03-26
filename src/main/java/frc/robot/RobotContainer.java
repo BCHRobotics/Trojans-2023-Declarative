@@ -11,16 +11,15 @@ import frc.robot.Constants.PERIPHERALS;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Mechanism;
 
-import com.pathplanner.lib.PathConstraints;
-import com.pathplanner.lib.PathPlanner;
-import com.revrobotics.CANSparkMax.IdleMode;
-
 // Import required libraries
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import com.pathplanner.lib.PathConstraints;
+import com.pathplanner.lib.PathPlanner;
 
 /**
  * This class is where the bulk of the robot should be declared. Since
@@ -44,7 +43,7 @@ public class RobotContainer {
   private final Command driveAuto = Autos.driveBack(drivetrain);
   private final Command balanceAuto = Autos.driveBackAndBalance(drivetrain);
   private final Command scoreAuto = Autos.scoreTwoPieces(drivetrain, mechanism);
-  private final Command exampleAuto = Autos.PathPlannedAuto(drivetrain);
+  private final Command exampleAuto = Autos.trajectoryAuto(drivetrain);
   private final Command plannerAuto = Autos.followTrajectoryCommand(drivetrain,
       PathPlanner.loadPath("TestPathD", new PathConstraints(3, 1)), true);
 
@@ -54,22 +53,21 @@ public class RobotContainer {
   public RobotContainer() {
     // Set default commands
     // Control the drive with split-stick arcade controls
-    drivetrain.setDefaultCommand(
-        drivetrain.arcadeDriveCommand(
-            () -> -driverController.getLeftY(), () -> -driverController.getRightX(),
-            () -> driverController.getLeftTriggerAxis(), () -> driverController.getRightTriggerAxis())
-            .beforeStarting(drivetrain.enableRampRate()));
+    this.drivetrain.setDefaultCommand(
+        this.drivetrain.arcadeDriveCommand(
+            () -> -this.driverController.getLeftY(), () -> -this.driverController.getRightX(),
+            () -> this.driverController.getLeftTriggerAxis(), () -> this.driverController.getRightTriggerAxis()));
 
     configureBindings();
 
     // Add commands to the autonomous command chooser
-    autoChooser.setDefaultOption("Drive Back", driveAuto);
-    autoChooser.addOption("Balance", balanceAuto);
-    autoChooser.addOption("Score", scoreAuto);
-    autoChooser.addOption("Example", exampleAuto);
-    autoChooser.addOption("Planner", plannerAuto);
+    this.autoChooser.setDefaultOption("Drive Back", driveAuto);
+    this.autoChooser.addOption("Balance", balanceAuto);
+    this.autoChooser.addOption("Score", scoreAuto);
+    this.autoChooser.addOption("Example", exampleAuto);
+    this.autoChooser.addOption("Planner", plannerAuto);
 
-    SmartDashboard.putData("Autonomous Route", autoChooser);
+    SmartDashboard.putData("Autonomous Route", this.autoChooser);
   }
 
   /**
@@ -85,35 +83,43 @@ public class RobotContainer {
    */
   public void configureBindings() {
 
-    driverController.rightBumper().or(driverController.y())
-        .onTrue(drivetrain.enableBrakeMode()).onFalse(drivetrain.releaseBrakeMode());
+    this.driverController.rightBumper().or(this.driverController.y())
+        .onTrue(this.drivetrain.enableBrakeMode()).onFalse(this.drivetrain.releaseBrakeMode());
 
-    driverController.y().whileTrue(drivetrain.balance());
+    this.driverController.y().whileTrue(this.drivetrain.balance());
 
-    driverController.leftBumper().whileTrue(
-        drivetrain.enableBrakeMode().andThen(drivetrain.emergencyStop())).onFalse(drivetrain.releaseBrakeMode());
+    this.driverController.leftBumper()
+        .whileTrue(this.drivetrain.enableBrakeMode()
+            .andThen(this.drivetrain.emergencyStop()))
+        .onFalse(this.drivetrain.releaseBrakeMode());
 
-    operatorController.povUp().onTrue(mechanism.setArmPreset(MECHANISM.TOP));
-    operatorController.povLeft().onTrue(mechanism.setArmPreset(MECHANISM.MID));
-    operatorController.povDown().onTrue(mechanism.setArmPreset(MECHANISM.GROUND));
-    operatorController.povRight().onTrue(mechanism.setArmPreset(MECHANISM.TRANSPORT));
-    operatorController.rightStick().onTrue(mechanism.setArmPreset(MECHANISM.STATION));
-    operatorController.leftStick().onTrue(mechanism.setArmPreset(MECHANISM.DEFAULT));
+    this.driverController.a().whileTrue(this.drivetrain.seekAprilTag());
+    this.driverController.b().onTrue(Commands.runOnce(() -> {
+      this.drivetrain.resetEncoders();
+    }));
+
+    this.operatorController.povUp().onTrue(this.mechanism.setArmPreset(MECHANISM.TOP));
+    this.operatorController.povLeft().onTrue(this.mechanism.setArmPreset(MECHANISM.MID));
+    this.operatorController.povDown().onTrue(this.mechanism.setArmPreset(MECHANISM.GROUND));
+    this.operatorController.povRight().onTrue(this.mechanism.setArmPreset(MECHANISM.TRANSPORT));
+    this.operatorController.rightStick().onTrue(this.mechanism.setArmPreset(MECHANISM.STATION));
+    this.operatorController.leftStick().onTrue(this.mechanism.setArmPreset(MECHANISM.DEFAULT));
+    this.operatorController.leftBumper().whileTrue(this.mechanism.blinkCubeLED());
+    this.operatorController.rightBumper().whileTrue(this.mechanism.blinkConeLED());
   }
 
   /**
    * HALTS all chassis motors
    */
-  public void EMERGENCY_STOP() {
-    this.drivetrain.setBrakeMode(IdleMode.kBrake);
-    this.drivetrain.setDriveOutput(0);
+  public Command EMERGENCY_STOP() {
+    return this.drivetrain.emergencyStop();
   }
 
   /**
    * Resets arm to default position
    */
-  public void ARM_RESET() {
-    mechanism.setArmPreset(MECHANISM.DEFAULT).schedule();
+  public Command ARM_RESET() {
+    return this.mechanism.setArmPreset(MECHANISM.DEFAULT);
   }
 
   /**
@@ -122,6 +128,6 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    return autoChooser.getSelected();
+    return this.autoChooser.getSelected();
   }
 }

@@ -103,10 +103,11 @@ public final class Autos {
   public static Command scoreAndBalance(Drivetrain drive) {
     return Commands.sequence(
         // Drive onto the charging station
-        drive.positionDriveCommand(0, 0),
+        drive.positionDriveCommand(0, 0)
+        .beforeStarting(drive::resetEncoders),
 
         // Balance the robot
-        drive.balance()).beforeStarting(drive::resetEncoders);
+        drive.balance());
   }
 
   /**
@@ -115,24 +116,7 @@ public final class Autos {
    * 
    * @return Autonomous command
    */
-  public static Command PathPlannedAuto(Drivetrain drive) {
-    // Create a voltage constraint to ensure we don't accelerate too fast
-    var autoVoltageConstraint = new DifferentialDriveVoltageConstraint(
-        new SimpleMotorFeedforward(
-            PATHING.kS,
-            PATHING.kV,
-            PATHING.kA),
-        PATHING.DRIVE_KINEMATICS,
-        10);
-
-    // Create config for trajectory
-    TrajectoryConfig config = new TrajectoryConfig(
-        PATHING.TRAJECTORY_MAX_SPEED,
-        PATHING.TRAJECTORY_MAX_ACCEL)
-        // Add kinematics to ensure max speed is actually obeyed
-        .setKinematics(PATHING.DRIVE_KINEMATICS)
-        // Apply the voltage constraint
-        .addConstraint(autoVoltageConstraint);
+  public static Command trajectoryAuto(Drivetrain drive) {
 
     // An example trajectory to follow. All units in meters.
     Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
@@ -143,7 +127,19 @@ public final class Autos {
         // End 3 meters straight ahead of where we started, facing forward
         new Pose2d(3, 0, new Rotation2d(0)),
         // Pass config
-        config);
+        new TrajectoryConfig(
+            PATHING.MAX_SPEED,
+            PATHING.MAX_ACCEL)
+            // Add kinematics to ensure max speed is actually obeyed
+            .setKinematics(PATHING.DRIVE_KINEMATICS)
+            // Apply the voltage constraint
+            .addConstraint(new DifferentialDriveVoltageConstraint(
+                new SimpleMotorFeedforward(
+                    PATHING.kS,
+                    PATHING.kV,
+                    PATHING.kA),
+                PATHING.DRIVE_KINEMATICS,
+                10)));
 
     RamseteCommand ramseteCommand = new RamseteCommand(
         exampleTrajectory,
@@ -165,7 +161,7 @@ public final class Autos {
     drive.resetOdometry(exampleTrajectory.getInitialPose());
 
     // Run path following command, then stop at the end.
-    return ramseteCommand.andThen(() -> drive.setVoltageOutput(0, 0));
+    return ramseteCommand.andThen(drive.emergencyStop());
   }
 
   /**

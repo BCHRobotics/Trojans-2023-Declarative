@@ -4,24 +4,34 @@
 
 package frc.robot.subsystems;
 
+// Import required classes
 import frc.robot.Constants.MECHANISM;
 import frc.robot.Constants.MISC;
 import frc.robot.util.control.ArmPresets;
 import frc.robot.util.control.SparkMaxPID;
 
+// Import required libraries
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.ColorSensorV3;
 import com.revrobotics.SparkMaxAbsoluteEncoder;
+import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMax.SoftLimitDirection;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.SparkMaxAbsoluteEncoder.Type;
 import com.revrobotics.SparkMaxPIDController.AccelStrategy;
 
-import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj.DigitalOutput;
+import edu.wpi.first.wpilibj.I2C;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 
 public class Mechanism extends SubsystemBase {
   private final CANSparkMax shoulderMotor = new CANSparkMax(MECHANISM.SHOULDER_ID, MotorType.kBrushless);
   private final CANSparkMax wristMotor = new CANSparkMax(MECHANISM.WRIST_ID, MotorType.kBrushless);
+  private final CANSparkMax clawMotor = new CANSparkMax(MECHANISM.CLAW_ID, MotorType.kBrushless);
 
   private final SparkMaxAbsoluteEncoder shoulderEncoder;
   private final SparkMaxAbsoluteEncoder wristEncoder;
@@ -29,19 +39,28 @@ public class Mechanism extends SubsystemBase {
   private final SparkMaxPID shoulderController;
   private final SparkMaxPID wristController;
 
+  private final ColorSensorV3 sensor;
+
+  private final DigitalOutput coneLED;
+  private final DigitalOutput cubeLED;
+
   /** Creates a new Mechanism. */
   public Mechanism() {
     this.shoulderMotor.restoreFactoryDefaults();
     this.wristMotor.restoreFactoryDefaults();
+    this.clawMotor.restoreFactoryDefaults();
 
-    this.shoulderMotor.setIdleMode(CANSparkMax.IdleMode.kBrake);
-    this.wristMotor.setIdleMode(CANSparkMax.IdleMode.kBrake);
+    this.shoulderMotor.setIdleMode(IdleMode.kBrake);
+    this.wristMotor.setIdleMode(IdleMode.kBrake);
+    this.clawMotor.setIdleMode(IdleMode.kBrake);
 
     this.shoulderMotor.setSmartCurrentLimit(60, 20);
+    this.wristMotor.setSmartCurrentLimit(60, 20);
     this.wristMotor.setSmartCurrentLimit(40, 15);
 
     this.shoulderMotor.setInverted(false);
     this.wristMotor.setInverted(false);
+    this.clawMotor.setInverted(false);
 
     this.shoulderEncoder = this.shoulderMotor.getAbsoluteEncoder(Type.kDutyCycle);
     this.wristEncoder = this.wristMotor.getAbsoluteEncoder(Type.kDutyCycle);
@@ -78,6 +97,11 @@ public class Mechanism extends SubsystemBase {
 
     this.shoulderController.setMotionProfileType(AccelStrategy.kSCurve);
     this.wristController.setMotionProfileType(AccelStrategy.kSCurve);
+
+    this.sensor = new ColorSensorV3(I2C.Port.kOnboard);
+
+    this.coneLED = new DigitalOutput(MISC.CONE_LED_PORT);
+    this.cubeLED = new DigitalOutput(MISC.CUBE_LED_PORT);
   }
 
   /**
@@ -85,7 +109,7 @@ public class Mechanism extends SubsystemBase {
    * 
    * @param preset
    */
-  public CommandBase setArmPreset(ArmPresets preset) {
+  public Command setArmPreset(ArmPresets preset) {
     return run(() -> {
       this.setShoulderAngle(Math.toDegrees(
           Math.acos((MECHANISM.SHOULDER_HEIGHT - MECHANISM.WRIST_HEIGHT_OFFSET - preset.wristHeight)
@@ -104,7 +128,7 @@ public class Mechanism extends SubsystemBase {
    */
   private void setShoulderAngle(double angle) {
     if (MISC.WITHIN_TOLERANCE(this.getShoulderPosition(), angle,
-        MECHANISM.SHOULDER_TOLERANCE + 2)) {
+        MECHANISM.SHOULDER_TOLERANCE)) {
       if (angle <= MECHANISM.SHOULDER_DEFAULT_OFFSET)
         this.shoulderMotor.disable();
       return;
@@ -126,6 +150,85 @@ public class Mechanism extends SubsystemBase {
                 + MECHANISM.WRIST_PARALLEL_OFFSET + MECHANISM.WRIST_DEFAULT_OFFSET)
             : MECHANISM.WRIST_LIMIT);
 
+  }
+
+  /**
+   * Runs intake claw to collect game piece until reached proximity
+   * 
+   * @return "Grab Game-Piece" Command
+   */
+  public Command grabGamePiece() {
+    return runEnd(() -> this.setClawSpeed(1), () -> this.setClawSpeed(0))
+        .until(() -> {
+          return this.sensor.getProximity() >= MISC.GAMEPIECE_PROXIMITY;
+        });
+  }
+
+  /**
+   * Runs intake claw to release game piece, waits 2 seconds then stops the motor
+   * 
+   * @return "Release Game-Piece" Command
+   */
+  public Command releaseGamePiece() {
+    return Commands.sequence(
+        runOnce(() -> this.setClawSpeed(-1)),
+        new WaitCommand(2),
+        runOnce(() -> this.setClawSpeed(0)));
+  }
+
+  /**
+   * Sets claw speed in percent output [-1 --> 1]
+   */
+  private void setClawSpeed(double speed) {
+    this.clawMotor.set(speed);
+  }
+
+  /**
+   * Blinks the Cone LED
+   * 
+   * @return "Blink Cone LED" Command
+   */
+  public Command blinkConeLED() {
+    return Commands.repeatingSequence(
+        this.setConeLED(true),
+        new WaitCommand(MISC.BLINK_INTERVAL),
+        this.setConeLED(false),
+        new WaitCommand(MISC.BLINK_INTERVAL))
+        .andThen(this.setConeLED(false));
+  }
+
+  /**
+   * Blinks the Cube LED
+   * 
+   * @return "Blink Cube LED" Command
+   */
+  public Command blinkCubeLED() {
+    return Commands.repeatingSequence(
+        this.setCubeLED(true),
+        new WaitCommand(MISC.BLINK_INTERVAL),
+        this.setCubeLED(false),
+        new WaitCommand(MISC.BLINK_INTERVAL))
+        .andThen(this.setCubeLED(false));
+  }
+
+  /**
+   * Toggles the Cone LED
+   * 
+   * @return "Toggle Cone LED" Command
+   */
+  public Command setConeLED(boolean state) {
+    SmartDashboard.putBoolean("Cone Request", state);
+    return runOnce(() -> this.coneLED.set(state));
+  }
+
+  /**
+   * Toggles the Cube LED
+   * 
+   * @return "Toggle Cube LED" Command
+   */
+  public Command setCubeLED(boolean state) {
+    SmartDashboard.putBoolean("Cube Request", state);
+    return runOnce(() -> this.cubeLED.set(state));
   }
 
   /**
