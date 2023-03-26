@@ -115,7 +115,7 @@ public final class Autos {
    * 
    * @return Autonomous command
    */
-  public static Command PathPlannedAuto(Drivetrain drive) {
+  public static Command trajectoryAuto(Drivetrain drive) {
     // Create a voltage constraint to ensure we don't accelerate too fast
     var autoVoltageConstraint = new DifferentialDriveVoltageConstraint(
         new SimpleMotorFeedforward(
@@ -165,7 +165,7 @@ public final class Autos {
     drive.resetOdometry(exampleTrajectory.getInitialPose());
 
     // Run path following command, then stop at the end.
-    return ramseteCommand.andThen(() -> drive.setVoltageOutput(0, 0));
+    return ramseteCommand.andThen(drive.emergencyStop());
   }
 
   /**

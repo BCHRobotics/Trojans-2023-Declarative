@@ -16,7 +16,7 @@ import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.SparkMaxAbsoluteEncoder.Type;
 import com.revrobotics.SparkMaxPIDController.AccelStrategy;
 
-import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Mechanism extends SubsystemBase {
@@ -85,7 +85,7 @@ public class Mechanism extends SubsystemBase {
    * 
    * @param preset
    */
-  public CommandBase setArmPreset(ArmPresets preset) {
+  public Command setArmPreset(ArmPresets preset) {
     return run(() -> {
       this.setShoulderAngle(Math.toDegrees(
           Math.acos((MECHANISM.SHOULDER_HEIGHT - MECHANISM.WRIST_HEIGHT_OFFSET - preset.wristHeight)

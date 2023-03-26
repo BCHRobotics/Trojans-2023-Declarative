@@ -30,6 +30,7 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.SparkMaxPIDController.AccelStrategy;
+
 public class Drivetrain extends SubsystemBase {
 
   private final CANSparkMax frontLeftMotor;
@@ -117,17 +118,17 @@ public class Drivetrain extends SubsystemBase {
    * @param min the commanded snail percentage
    * @param max the commanded turbo percentage
    */
-  public Command arcadeDriveCommand(DoubleSupplier fwd, DoubleSupplier rot, 
-                                    DoubleSupplier min, DoubleSupplier max) {
+  public Command arcadeDriveCommand(DoubleSupplier fwd, DoubleSupplier rot,
+      DoubleSupplier min, DoubleSupplier max) {
     return run(() -> {
       this.setMaxOutput(CHASSIS.DEFAULT_OUTPUT + (max.getAsDouble() * CHASSIS.OUTPUT_INTERVAL)
           - (min.getAsDouble() * CHASSIS.OUTPUT_INTERVAL));
       this.setOutput(fwd.getAsDouble(), rot.getAsDouble());
     })
-    .beforeStarting(() -> this.drive.setDeadband(PERIPHERALS.CONTROLLER_DEADBAND))
-    .beforeStarting(this::enableRampRate)
-    .withInterruptBehavior(InterruptionBehavior.kCancelSelf)
-    .withName("arcadeDrive");
+        .beforeStarting(() -> this.drive.setDeadband(PERIPHERALS.CONTROLLER_DEADBAND))
+        .beforeStarting(this::enableRampRate)
+        .withInterruptBehavior(InterruptionBehavior.kCancelSelf)
+        .withName("arcadeDrive");
   }
 
   /**
@@ -135,15 +136,15 @@ public class Drivetrain extends SubsystemBase {
    */
   public Command positionDriveCommand(double leftPos, double rightPos) {
     return startEnd(() -> {
-      this.setPosition(leftPos * CHASSIS.TURNING_CONVERSION, 
-      rightPos * CHASSIS.TURNING_CONVERSION);
-    }, 
-    this::emergencyStop)
-      .until(this::reachedPosition)
-      .beforeStarting(this::enableBrakeMode)
-      .beforeStarting(this::disableRampRate)
-      .beforeStarting(() -> this.setMaxOutput(1))
-      .withName("positionDrive");
+      this.setPosition(leftPos * CHASSIS.TURNING_CONVERSION,
+          rightPos * CHASSIS.TURNING_CONVERSION);
+    },
+        this::emergencyStop)
+        .until(this::reachedPosition)
+        .beforeStarting(this::enableBrakeMode)
+        .beforeStarting(this::disableRampRate)
+        .beforeStarting(() -> this.setMaxOutput(1))
+        .withName("positionDrive");
   }
 
   /**
@@ -151,17 +152,17 @@ public class Drivetrain extends SubsystemBase {
    */
   private boolean reachedPosition() {
     return this.leftMotorController.reachedSetpoint(this.getLeftPosition(), CHASSIS.TOLERANCE) &&
-           this.rightMotorController.reachedSetpoint(this.getRightPosition(), CHASSIS.TOLERANCE);
+        this.rightMotorController.reachedSetpoint(this.getRightPosition(), CHASSIS.TOLERANCE);
   }
 
   public Command balance() {
     return new PIDCommand(
         new PIDController(
-          CHASSIS.GYRO_CONSTANTS.kP,
-          CHASSIS.GYRO_CONSTANTS.kI,
-          CHASSIS.GYRO_CONSTANTS.kD),
+            CHASSIS.GYRO_CONSTANTS.kP,
+            CHASSIS.GYRO_CONSTANTS.kI,
+            CHASSIS.GYRO_CONSTANTS.kD),
         // Close the loop on the turn rate
-        () -> this.gyro.getPitch(),
+        this.gyro::getPitch,
         // Setpoint is 0
         0,
         // Pipe the output to the turning controls
@@ -178,16 +179,16 @@ public class Drivetrain extends SubsystemBase {
   public Command seekAprilTag() {
     return new PIDCommand(
         new PIDController(
-          CHASSIS.SEEK_CONSTANTS.kP,
-          CHASSIS.SEEK_CONSTANTS.kI,
-          CHASSIS.SEEK_CONSTANTS.kD),
+            CHASSIS.SEEK_CONSTANTS.kP,
+            CHASSIS.SEEK_CONSTANTS.kI,
+            CHASSIS.SEEK_CONSTANTS.kD),
         // Close the loop on the turn rate
-        () -> this.limelight.getTargetX(),
+        this.limelight::getTargetX,
         // Setpoint is 0.5
         0.5,
         // Pipe the output to the turning controls
         (output) -> this.setDriveTurn(output),
-        //require the drivetrain
+        // require the drivetrain
         this)
         .andThen(this::emergencyStop)
         .beforeStarting(this::resetEncoders)
@@ -260,14 +261,15 @@ public class Drivetrain extends SubsystemBase {
    * Returns a command that stops the drivetrain its tracks.
    */
   public Command emergencyStop() {
-    return runOnce(() -> {
+    return runEnd(() -> {
       this.frontLeftMotor.disable();
       this.frontRightMotor.disable();
       this.backLeftMotor.disable();
       this.backRightMotor.disable();
-    })
-    .beforeStarting(this::enableBrakeMode)
-    .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
+    }, this::releaseBrakeMode)
+        .beforeStarting(this::enableBrakeMode)
+        .ignoringDisable(true)
+        .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
   }
 
   /**
@@ -285,11 +287,9 @@ public class Drivetrain extends SubsystemBase {
    * 
    * @param percent linear motion [-1 --> 1] (Backwards --> Forward)
    */
-  public Command setDriveOutput(double percent) {
-    return runOnce(() -> {
+  private void setDriveOutput(double percent) {
     this.frontLeftMotor.set(percent);
     this.frontRightMotor.set(percent);
-    });
   }
 
   /**
@@ -432,7 +432,7 @@ public class Drivetrain extends SubsystemBase {
    * @param rightVolts the commanded right output
    */
   public void setVoltageOutput(double leftVolts, double rightVolts) {
-    
+
     this.frontLeftMotor.setVoltage(leftVolts);
     this.frontRightMotor.setVoltage(rightVolts);
     this.drive.feed();
