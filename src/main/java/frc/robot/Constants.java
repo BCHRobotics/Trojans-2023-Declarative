@@ -124,7 +124,7 @@ public final class Constants {
 
     // Robot arm ABSOLUTE encoder offset
     public static final double SHOULDER_ENCODER_OFFSET = (204.7492790) - MECHANISM.SHOULDER_DEFAULT_OFFSET;
-    public static final double WRIST_ENCODER_OFFSET = (172.0870650) - MECHANISM.WRIST_DEFAULT_OFFSET;
+    public static final double WRIST_ENCODER_OFFSET = (111.6552866) - MECHANISM.WRIST_DEFAULT_OFFSET;
 
     // Mechanism PID Constants TODO: Re-tune after modified wrist installation
     public static final SparkMaxConstants SHOULDER_CONTROL_CONSTANTS = new SparkMaxConstants(
