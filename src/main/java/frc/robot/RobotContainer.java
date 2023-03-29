@@ -104,6 +104,8 @@ public class RobotContainer {
     this.operatorController.povRight().onTrue(this.mechanism.setArmPreset(MECHANISM.TRANSPORT));
     this.operatorController.rightStick().onTrue(this.mechanism.setArmPreset(MECHANISM.STATION));
     this.operatorController.leftStick().onTrue(this.mechanism.setArmPreset(MECHANISM.DEFAULT));
+    this.operatorController.x().onTrue(this.mechanism.grabGamePiece(this.operatorController.b()));
+    this.operatorController.a().onTrue(this.mechanism.releaseGamePiece());
     this.operatorController.leftBumper().whileTrue(this.mechanism.blinkCubeLED());
     this.operatorController.rightBumper().whileTrue(this.mechanism.blinkConeLED());
   }

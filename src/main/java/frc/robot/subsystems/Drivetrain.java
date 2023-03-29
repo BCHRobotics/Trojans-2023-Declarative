@@ -193,6 +193,11 @@ public class Drivetrain extends SubsystemBase {
         .beforeStarting(this::resetEncoders);
   }
 
+  public Command seekTarget() {
+    return this.positionDriveCommand(this.limelight.getTargetX() * CHASSIS.TURNING_CONVERSION,
+        -this.limelight.getTargetX() * CHASSIS.TURNING_CONVERSION).beforeStarting(this::resetEncoders);
+  }
+
   /**
    * Returns a command that enables brake mode on the drivetrain.
    */

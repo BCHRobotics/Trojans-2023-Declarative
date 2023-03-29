@@ -10,6 +10,8 @@ import frc.robot.Constants.MISC;
 import frc.robot.util.control.ArmPresets;
 import frc.robot.util.control.SparkMaxPID;
 
+import java.util.function.BooleanSupplier;
+
 // Import required libraries
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.ColorSensorV3;
@@ -56,11 +58,11 @@ public class Mechanism extends SubsystemBase {
 
     this.shoulderMotor.setSmartCurrentLimit(60, 20);
     this.wristMotor.setSmartCurrentLimit(60, 20);
-    this.wristMotor.setSmartCurrentLimit(40, 15);
+    this.wristMotor.setSmartCurrentLimit(5, 5);
 
     this.shoulderMotor.setInverted(false);
     this.wristMotor.setInverted(false);
-    this.clawMotor.setInverted(false);
+    this.clawMotor.setInverted(true);
 
     this.shoulderEncoder = this.shoulderMotor.getAbsoluteEncoder(Type.kDutyCycle);
     this.wristEncoder = this.wristMotor.getAbsoluteEncoder(Type.kDutyCycle);
@@ -149,7 +151,7 @@ public class Mechanism extends SubsystemBase {
                 * (MECHANISM.WRIST_LIMIT - MECHANISM.WRIST_PARALLEL_OFFSET)
                 + MECHANISM.WRIST_PARALLEL_OFFSET + MECHANISM.WRIST_DEFAULT_OFFSET)
             : MECHANISM.WRIST_LIMIT);
-
+    // TODO: Remember to add dynamic offset, don't hit ground!!!
   }
 
   /**
@@ -157,11 +159,9 @@ public class Mechanism extends SubsystemBase {
    * 
    * @return "Grab Game-Piece" Command
    */
-  public Command grabGamePiece() {
-    return runEnd(() -> this.setClawSpeed(1), () -> this.setClawSpeed(0))
-        .until(() -> {
-          return this.sensor.getProximity() >= MISC.GAMEPIECE_PROXIMITY;
-        });
+  public Command grabGamePiece(BooleanSupplier kill) {
+    return runEnd(() -> this.setClawSpeed(0.5), () -> this.setClawSpeed(0))
+        .until(kill::getAsBoolean);
   }
 
   /**
@@ -172,7 +172,7 @@ public class Mechanism extends SubsystemBase {
   public Command releaseGamePiece() {
     return Commands.sequence(
         runOnce(() -> this.setClawSpeed(-1)),
-        new WaitCommand(2),
+        new WaitCommand(1),
         runOnce(() -> this.setClawSpeed(0)));
   }
 
@@ -252,5 +252,6 @@ public class Mechanism extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
+    SmartDashboard.putNumber("Color Sensor", this.sensor.getProximity());
   }
 }

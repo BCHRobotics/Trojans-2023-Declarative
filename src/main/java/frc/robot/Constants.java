@@ -138,7 +138,7 @@ public final class Constants {
     // Arm preset profiles TODO: Verify Presets with Drive Team
     public static final ArmPresets DEFAULT = new ArmPresets(0, -90);
     public static final ArmPresets TRANSPORT = new ArmPresets(0, -70);
-    public static final ArmPresets GROUND = new ArmPresets(0, 0);
+    public static final ArmPresets GROUND = new ArmPresets(4, 0);
     public static final ArmPresets MID = new ArmPresets(38, 0);
     public static final ArmPresets STATION = new ArmPresets(41, 0);
     public static final ArmPresets TOP = new ArmPresets(52, 0);
