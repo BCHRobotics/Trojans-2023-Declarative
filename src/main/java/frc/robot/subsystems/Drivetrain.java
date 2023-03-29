@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.PIDCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import com.revrobotics.CANSparkMax;
@@ -135,11 +136,10 @@ public class Drivetrain extends SubsystemBase {
    */
   public Command positionDriveCommand(double leftPos, double rightPos) {
     return startEnd(() -> {
-      this.setPosition(leftPos * CHASSIS.TURNING_CONVERSION,
-          rightPos * CHASSIS.TURNING_CONVERSION);
+      this.setPosition(leftPos * CHASSIS.LEFT_POSITION_CONVERSION,
+          rightPos * CHASSIS.RIGHT_POSITION_CONVERSION);
     },
         this::emergencyStop)
-        .until(this::reachedPosition)
         .beforeStarting(this::enableBrakeMode)
         .beforeStarting(this::disableRampRate)
         .beforeStarting(() -> this.setMaxOutput(1))
@@ -260,6 +260,17 @@ public class Drivetrain extends SubsystemBase {
         .beforeStarting(this::enableBrakeMode)
         .ignoringDisable(true)
         .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
+  }
+
+  /**
+   * basically like e-stop command for disabled mode only
+   */
+  public void killSwitch() {
+    this.frontLeftMotor.disable();
+    this.frontRightMotor.disable();
+    this.backLeftMotor.disable();
+    this.backRightMotor.disable();
+    this.setBrakeMode(IdleMode.kBrake);
   }
 
   /**

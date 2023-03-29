@@ -48,7 +48,7 @@ public final class Autos {
   public static Command driveBackAndBalance(Drivetrain drive) {
     return Commands.sequence(
         // Drive onto the charging station
-        drive.positionDriveCommand(-60, -60).beforeStarting(drive::resetEncoders),
+        drive.positionDriveCommand(-102, -102).beforeStarting(drive::resetEncoders),
 
         // Balance the robot
         drive.balance());
@@ -104,7 +104,7 @@ public final class Autos {
     return Commands.sequence(
         // Drive onto the charging station
         drive.positionDriveCommand(0, 0)
-        .beforeStarting(drive::resetEncoders),
+            .beforeStarting(drive::resetEncoders),
 
         // Balance the robot
         drive.balance());

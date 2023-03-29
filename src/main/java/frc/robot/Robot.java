@@ -59,11 +59,11 @@ public class Robot extends TimedRobot {
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
-    this.robotContainer.EMERGENCY_STOP();
   }
 
   @Override
   public void disabledPeriodic() {
+    this.robotContainer.EMERGENCY_STOP();
   }
 
   @Override
@@ -90,7 +90,8 @@ public class Robot extends TimedRobot {
     if (this.autonomousCommand != null) {
       this.autonomousCommand.cancel();
     }
-    this.robotContainer.ARM_RESET();
+    this.robotContainer.CHASSIS_RESET().schedule();
+    this.robotContainer.ARM_RESET().schedule();
   }
 
   /** This function is called periodically during operator control. */
