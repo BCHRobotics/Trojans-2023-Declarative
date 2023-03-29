@@ -120,7 +120,7 @@ public class Drivetrain extends SubsystemBase {
    */
   public Command arcadeDriveCommand(DoubleSupplier fwd, DoubleSupplier rot,
       DoubleSupplier min, DoubleSupplier max) {
-    return run(() -> {
+    return runOnce(() -> {
       this.setMaxOutput(CHASSIS.DEFAULT_OUTPUT + (max.getAsDouble() * CHASSIS.OUTPUT_INTERVAL)
           - (min.getAsDouble() * CHASSIS.OUTPUT_INTERVAL));
       this.setOutput(fwd.getAsDouble(), rot.getAsDouble());
@@ -136,10 +136,10 @@ public class Drivetrain extends SubsystemBase {
    */
   public Command positionDriveCommand(double leftPos, double rightPos) {
     return startEnd(() -> {
-      this.setPosition(leftPos * CHASSIS.LEFT_POSITION_CONVERSION,
-          rightPos * CHASSIS.RIGHT_POSITION_CONVERSION);
+      this.setPosition(leftPos, rightPos);
     },
         this::emergencyStop)
+        .until(this::reachedPosition)
         .beforeStarting(this::enableBrakeMode)
         .beforeStarting(this::disableRampRate)
         .beforeStarting(() -> this.setMaxOutput(1))
@@ -474,7 +474,8 @@ public class Drivetrain extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    this.driveOdometry.update(this.gyro.getRotation2d(), Units.inchesToMeters(this.getLeftPosition()),
+    this.driveOdometry.update(this.gyro.getRotation2d(),
+        Units.inchesToMeters(this.getLeftPosition()),
         Units.inchesToMeters(this.getRightPosition()));
 
     this.drive.feed();

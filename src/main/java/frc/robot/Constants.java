@@ -71,9 +71,9 @@ public final class Constants {
 
     // Drive PID Constants TODO: Re-tune Drivetrain PID
     public static final SparkMaxConstants LEFT_DRIVE_CONSTANTS = new SparkMaxConstants(
-        0.00012, 0, 0.0025, 0, 0.00005, -1, 1, 0, 0, 6000, 2000, 0.05);
+        0.00017, 0, 0.0025, 0, 0.00005, -1, 1, 0, 0, 6000, 1000, 0.05);
     public static final SparkMaxConstants RIGHT_DRIVE_CONSTANTS = new SparkMaxConstants(
-        0.00012, 0, 0.0025, 0, 0.00005, -1, 1, 0, 0, 6000, 2000, 0.05);
+        0.00017, 0, 0.0025, 0, 0.00005, -1, 1, 0, 0, 6000, 1000, 0.05);
 
     // Gyro constants
     public static final SerialPort.Port GYRO_PORT = SerialPort.Port.kMXP;

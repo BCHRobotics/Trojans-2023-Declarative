@@ -59,11 +59,11 @@ public class Robot extends TimedRobot {
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
   public void disabledInit() {
+    this.robotContainer.EMERGENCY_STOP();
   }
 
   @Override
   public void disabledPeriodic() {
-    this.robotContainer.EMERGENCY_STOP();
   }
 
   @Override
