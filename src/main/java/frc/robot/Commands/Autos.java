@@ -4,26 +4,16 @@
 
 package frc.robot.Commands;
 
-import java.util.List;
-
 import com.pathplanner.lib.PathPlannerTrajectory;
 import com.pathplanner.lib.commands.PPRamseteCommand;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.math.trajectory.TrajectoryConfig;
-import edu.wpi.first.math.trajectory.TrajectoryGenerator;
-import edu.wpi.first.math.trajectory.constraint.DifferentialDriveVoltageConstraint;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import frc.robot.Constants.MECHANISM;
 import frc.robot.Constants.PATHING;
 import frc.robot.subsystems.Drivetrain;
@@ -62,36 +52,33 @@ public final class Autos {
     return Commands.sequence(
 
         // Raise arm to reach target
-        mech.setArmPreset(MECHANISM.MID).until(() -> timer.advanceIfElapsed(2)),
+        mech.setArmPreset(MECHANISM.MID).until(() -> timer.advanceIfElapsed(1)),
 
-        drive.positionDriveCommand(16, 16).beforeStarting(drive::resetEncoders).until(() -> timer.advanceIfElapsed(3)),
-
-        // TODO: add drop game piece command
+        drive.positionDriveCommand(16, 16).beforeStarting(drive::resetEncoders).until(() -> timer.advanceIfElapsed(2)),
 
         drive.positionDriveCommand(-40, -40)
-            .alongWith(mech.setArmPreset(MECHANISM.TRANSPORT)).until(() -> timer.advanceIfElapsed(3.5)),
+            .alongWith(mech.releaseGamePiece().andThen(mech.setArmPreset(MECHANISM.TRANSPORT)))
+            .until(() -> timer.advanceIfElapsed(2.5)),
 
-        drive.positionDriveCommand(-72, -8).until(() -> timer.advanceIfElapsed(3.5)),
+        drive.positionDriveCommand(-72, -8).alongWith(mech.setArmPreset(MECHANISM.GROUND))
+            .until(() -> timer.advanceIfElapsed(3)),
 
-        mech.setArmPreset(MECHANISM.GROUND).until(() -> timer.advanceIfElapsed(2)),
+        drive.positionDriveCommand(-52, 12).until(() -> timer.advanceIfElapsed(1.5)),
 
-        drive.positionDriveCommand(-52, 12).until(() -> timer.advanceIfElapsed(3)),
+        mech.grabGamePiece(),
 
-        // TODO: add ground pickup command
+        drive.positionDriveCommand(-72, -8).alongWith(mech.setArmPreset(MECHANISM.TRANSPORT))
+            .until(() -> timer.advanceIfElapsed(2)),
 
-        mech.setArmPreset(MECHANISM.TRANSPORT).until(() -> timer.advanceIfElapsed(3)),
+        drive.positionDriveCommand(-40, -40).until(() -> timer.advanceIfElapsed(2)),
 
-        drive.positionDriveCommand(-72, -8).until(() -> timer.advanceIfElapsed(3)),
+        drive.positionDriveCommand(20, 20).alongWith(mech.setArmPreset(MECHANISM.GROUND))
+            .until(() -> timer.advanceIfElapsed(1)),
 
-        drive.positionDriveCommand(-40, -40).until(() -> timer.advanceIfElapsed(3)),
-
-        drive.positionDriveCommand(12, 12).alongWith(mech.setArmPreset(MECHANISM.MID))
-            .until(() -> timer.advanceIfElapsed(5)),
-
-        // TODO: add score game piece command
+        mech.releaseGamePiece(),
 
         drive.positionDriveCommand(0, 0).alongWith(mech.setArmPreset(MECHANISM.DEFAULT))
-            .until(() -> timer.advanceIfElapsed(5)))
+            .until(() -> timer.advanceIfElapsed(3)))
         .beforeStarting(timer::restart).andThen(timer::stop);
   }
 
@@ -100,68 +87,15 @@ public final class Autos {
    * drives back, turns around, grabs another cone, and then drives
    * to the charging station and balances.
    */
-  public static Command scoreAndBalance(Drivetrain drive) {
+  public static Command scoreAndBalance(Drivetrain drive, Mechanism mech) {
     return Commands.sequence(
+        mech.releaseGamePiece(),
+
         // Drive onto the charging station
-        drive.positionDriveCommand(0, 0)
-            .beforeStarting(drive::resetEncoders),
+        drive.positionDriveCommand(0, 0),
 
         // Balance the robot
-        drive.balance());
-  }
-
-  /**
-   * An Incomprehnsible level autonomous routine that smoothly controls a
-   * differential drive robot using path planning and trajectories
-   * 
-   * @return Autonomous command
-   */
-  public static Command trajectoryAuto(Drivetrain drive) {
-
-    // An example trajectory to follow. All units in meters.
-    Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
-        // Start at the origin facing the +X direction
-        new Pose2d(0, 0, new Rotation2d(0)),
-        // Pass through these two interior waypoints, making an 's' curve path
-        List.of(new Translation2d(1, 1), new Translation2d(2, -1)),
-        // End 3 meters straight ahead of where we started, facing forward
-        new Pose2d(3, 0, new Rotation2d(0)),
-        // Pass config
-        new TrajectoryConfig(
-            PATHING.MAX_SPEED,
-            PATHING.MAX_ACCEL)
-            // Add kinematics to ensure max speed is actually obeyed
-            .setKinematics(PATHING.DRIVE_KINEMATICS)
-            // Apply the voltage constraint
-            .addConstraint(new DifferentialDriveVoltageConstraint(
-                new SimpleMotorFeedforward(
-                    PATHING.kS,
-                    PATHING.kV,
-                    PATHING.kA),
-                PATHING.DRIVE_KINEMATICS,
-                10)));
-
-    RamseteCommand ramseteCommand = new RamseteCommand(
-        exampleTrajectory,
-        drive::getPose,
-        new RamseteController(PATHING.RAMSETE_B, PATHING.RAMSETE_ZETA),
-        new SimpleMotorFeedforward(
-            PATHING.kS,
-            PATHING.kV,
-            PATHING.kA),
-        PATHING.DRIVE_KINEMATICS,
-        drive::getWheelSpeeds,
-        new PIDController(PATHING.kP, 0, 0),
-        new PIDController(PATHING.kP, 0, 0),
-        // RamseteCommand passes volts to the callback
-        drive::setVoltageOutput,
-        drive);
-
-    // Reset odometry to the starting pose of the trajectory.
-    drive.resetOdometry(exampleTrajectory.getInitialPose());
-
-    // Run path following command, then stop at the end.
-    return ramseteCommand.andThen(drive.emergencyStop());
+        drive.balance()).beforeStarting(drive::resetEncoders);
   }
 
   /**

@@ -5,8 +5,8 @@
 package frc.robot.subsystems;
 
 import frc.robot.Constants.CHASSIS;
-import frc.robot.Constants.MISC;
 import frc.robot.Constants.PERIPHERALS;
+import frc.robot.Constants.VISION.TARGET_TYPE;
 import frc.robot.util.control.SparkMaxPID;
 import frc.robot.util.devices.Gyro;
 import frc.robot.util.devices.Limelight;
@@ -22,7 +22,6 @@ import edu.wpi.first.wpilibj2.command.PIDCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 
-import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import com.revrobotics.CANSparkMax;
@@ -103,6 +102,7 @@ public class Drivetrain extends SubsystemBase {
     // Objects for balancing
     this.gyro = Gyro.getInstance();
     this.limelight = Limelight.getInstance();
+    this.limelight.setDesiredTarget(TARGET_TYPE.APRILTAG);
 
     this.driveOdometry = new DifferentialDriveOdometry(this.gyro.getRotation2d(),
         Units.inchesToMeters(this.getLeftPosition()),
@@ -123,7 +123,7 @@ public class Drivetrain extends SubsystemBase {
     return runOnce(() -> {
       this.setMaxOutput(CHASSIS.DEFAULT_OUTPUT + (max.getAsDouble() * CHASSIS.OUTPUT_INTERVAL)
           - (min.getAsDouble() * CHASSIS.OUTPUT_INTERVAL));
-      this.setOutput(fwd.getAsDouble(), rot.getAsDouble());
+      this.arcadeDrive(fwd.getAsDouble(), rot.getAsDouble());
     })
         .beforeStarting(() -> this.drive.setDeadband(PERIPHERALS.CONTROLLER_DEADBAND))
         .beforeStarting(this::enableRampRate)
@@ -154,6 +154,9 @@ public class Drivetrain extends SubsystemBase {
         this.rightMotorController.reachedSetpoint(this.getRightPosition(), CHASSIS.TOLERANCE);
   }
 
+  /**
+   * Uses PID along with limelight data to turn to target
+   */
   public Command balance() {
     return new PIDCommand(
         new PIDController(
@@ -165,7 +168,7 @@ public class Drivetrain extends SubsystemBase {
         // Setpoint is 0
         0,
         // Pipe the output to the turning controls
-        (output) -> this.setDriveStragiht(output),
+        (output) -> this.driveStraight(output),
         // Require the robot drive
         this)
         .andThen(this::emergencyStop)
@@ -184,7 +187,7 @@ public class Drivetrain extends SubsystemBase {
         // Setpoint is 0
         0,
         // Pipe the output to the turning controls
-        (output) -> this.setDriveTurn(output),
+        (output) -> this.turn(output),
         // require the drivetrain
         this)
         .andThen(this::emergencyStop)
@@ -193,9 +196,20 @@ public class Drivetrain extends SubsystemBase {
         .beforeStarting(this::resetEncoders);
   }
 
+  /**
+   * Uses smart-motion to turn to a limelight target
+   */
   public Command seekTarget() {
     return this.positionDriveCommand(this.limelight.getTargetX() * CHASSIS.TURNING_CONVERSION,
         -this.limelight.getTargetX() * CHASSIS.TURNING_CONVERSION).beforeStarting(this::resetEncoders);
+  }
+
+  /**
+   * Uses smart-motion to drive towards a limelight target
+   */
+  public Command goToTarget() {
+    return this.positionDriveCommand(this.limelight.getTargetDistance(), this.limelight.getTargetDistance())
+        .beforeStarting(this::resetEncoders);
   }
 
   /**
@@ -276,19 +290,19 @@ public class Drivetrain extends SubsystemBase {
   /**
    * Sets motor output using arcade drive controls
    * 
-   * @param forward linear motion [-1 --> 1] (Backwards --> Forward)
-   * @param rot     rotational motion [-1 --> 1] (L --> R)
+   * @param forward linear motion [-1 --> 1] (Backwards --> Forwards)
+   * @param rot     rotational motion [-1 --> 1] (Left --> Right)
    */
-  private void setOutput(double forward, double rot) {
+  private void arcadeDrive(double forward, double rot) {
     this.drive.arcadeDrive(forward, rot);
   }
 
   /**
    * Sets motor output using arcade drive controls
    * 
-   * @param percent linear motion [-1 --> 1] (Backwards --> Forward)
+   * @param percent linear motion [-1 --> 1] (Backwards --> Forwards)
    */
-  private void setDriveStragiht(double percent) {
+  private void driveStraight(double percent) {
     this.frontLeftMotor.set(percent);
     this.frontRightMotor.set(percent);
   }
@@ -298,7 +312,7 @@ public class Drivetrain extends SubsystemBase {
    * 
    * @param percent rotational motion [-1 --> 1] (Left --> Right)
    */
-  private void setDriveTurn(double percent) {
+  private void turn(double percent) {
     this.frontLeftMotor.set(percent);
     this.frontRightMotor.set(-percent);
   }
@@ -320,13 +334,6 @@ public class Drivetrain extends SubsystemBase {
    * @param right position in inches
    */
   private void setPosition(double left, double right) {
-    if (MISC.WITHIN_TOLERANCE(this.getLeftPosition(), left, CHASSIS.TOLERANCE)
-        && MISC.WITHIN_TOLERANCE(this.getRightPosition(), right, CHASSIS.TOLERANCE)) {
-      this.frontLeftMotor.disable();
-      this.frontRightMotor.disable();
-      return;
-    }
-
     this.leftMotorController.setSmartPosition(left);
     this.rightMotorController.setSmartPosition(right);
   }
@@ -401,6 +408,21 @@ public class Drivetrain extends SubsystemBase {
     this.frontRightMotor.burnFlash();
     this.backLeftMotor.burnFlash();
     this.backRightMotor.burnFlash();
+  }
+
+  /**
+   * Sets the limelight target to search for reflective
+   * tape.
+   */
+  public void searchForTape() {
+    this.limelight.setDesiredTarget(TARGET_TYPE.REFLECTIVE_TAPE);
+  }
+
+  /**
+   * Sets the limelight target to search for april tags.
+   */
+  public void searchForTags() {
+    this.limelight.setDesiredTarget(TARGET_TYPE.APRILTAG);
   }
 
   // Path planning methods
@@ -481,7 +503,7 @@ public class Drivetrain extends SubsystemBase {
     this.drive.feed();
 
     SmartDashboard.putNumber("Pitch", this.gyro.getPitch());
-    SmartDashboard.putNumber("left", this.getLeftPosition());
-    SmartDashboard.putNumber("right", this.getRightPosition());
+    SmartDashboard.putNumber("Left Position", this.getLeftPosition());
+    SmartDashboard.putNumber("Right Position", this.getRightPosition());
   }
 }

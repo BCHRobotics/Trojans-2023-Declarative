@@ -10,8 +10,6 @@ import frc.robot.Constants.MISC;
 import frc.robot.util.control.ArmPresets;
 import frc.robot.util.control.SparkMaxPID;
 
-import java.util.function.BooleanSupplier;
-
 // Import required libraries
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.SparkMaxAbsoluteEncoder;
@@ -108,6 +106,7 @@ public class Mechanism extends SubsystemBase {
    * @param preset
    */
   public Command setArmPreset(ArmPresets preset) {
+    SmartDashboard.putString("Arm Preset", preset.name);
     return run(() -> {
       this.setShoulderAngle(Math.toDegrees(
           Math.acos((MECHANISM.SHOULDER_HEIGHT - MECHANISM.WRIST_HEIGHT_OFFSET - preset.wristHeight)
@@ -147,7 +146,6 @@ public class Mechanism extends SubsystemBase {
                 * (MECHANISM.WRIST_LIMIT - MECHANISM.WRIST_PARALLEL_OFFSET)
                 + MECHANISM.WRIST_PARALLEL_OFFSET + MECHANISM.WRIST_DEFAULT_OFFSET)
             : MECHANISM.WRIST_LIMIT);
-    // TODO: Remember to add dynamic offset, don't hit ground!!!
   }
 
   /**
@@ -155,13 +153,18 @@ public class Mechanism extends SubsystemBase {
    * 
    * @return "Grab Game-Piece" Command
    */
-  public Command grabGamePiece(BooleanSupplier kill) {
-    return runEnd(() -> this.setClawSpeed(0.5), () -> this.setClawSpeed(0))
-        .until(kill::getAsBoolean);
+  public Command grabGamePiece() {
+    return runEnd(() -> this.setClawSpeed(0.5), () -> this.setClawSpeed(0.01))
+        .until(this::gamePieceDetected);
+  }
+
+  private boolean gamePieceDetected() {
+    return this.clawMotor.getOutputCurrent() > MECHANISM.DETECTION_CURRENT;
   }
 
   /**
-   * Runs intake claw to release game piece, waits 2 seconds then stops the motor
+   * Runs intake claw to release game piece, waits 0.8 seconds then stops the
+   * motor
    * 
    * @return "Release Game-Piece" Command
    */
@@ -170,6 +173,15 @@ public class Mechanism extends SubsystemBase {
         runOnce(() -> this.setClawSpeed(-1)),
         new WaitCommand(0.8),
         runOnce(() -> this.setClawSpeed(0)));
+  }
+
+  /**
+   * Disables intake claw motor
+   * 
+   * @return
+   */
+  public Command disableClaw() {
+    return runOnce(this.clawMotor::disable);
   }
 
   /**
@@ -185,11 +197,12 @@ public class Mechanism extends SubsystemBase {
    * @return "Blink Cone LED" Command
    */
   public Command blinkConeLED() {
-    return Commands.repeatingSequence(
+    return Commands.sequence(
         this.setConeLED(true),
         new WaitCommand(MISC.BLINK_INTERVAL),
         this.setConeLED(false),
         new WaitCommand(MISC.BLINK_INTERVAL))
+        .repeatedly()
         .andThen(this.setConeLED(false));
   }
 
@@ -199,11 +212,12 @@ public class Mechanism extends SubsystemBase {
    * @return "Blink Cube LED" Command
    */
   public Command blinkCubeLED() {
-    return Commands.repeatingSequence(
+    return Commands.sequence(
         this.setCubeLED(true),
         new WaitCommand(MISC.BLINK_INTERVAL),
         this.setCubeLED(false),
         new WaitCommand(MISC.BLINK_INTERVAL))
+        .repeatedly()
         .andThen(this.setCubeLED(false));
   }
 

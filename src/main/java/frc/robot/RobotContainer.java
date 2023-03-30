@@ -18,8 +18,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+
+import java.util.HashMap;
+
 import com.pathplanner.lib.PathConstraints;
 import com.pathplanner.lib.PathPlanner;
+import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.commands.FollowPathWithEvents;
 
 /**
  * This class is where the bulk of the robot should be declared. Since
@@ -39,19 +44,38 @@ public class RobotContainer {
   CommandXboxController driverController = new CommandXboxController(PERIPHERALS.DRIVER_PORT);
   CommandXboxController operatorController = new CommandXboxController(PERIPHERALS.OPERATOR_PORT);
 
+  // The Autonomous trajectory path to follow
+  private final PathPlannerTrajectory followMap = PathPlanner.loadPath("TestPathD", new PathConstraints(3, 1));
+
+  // This is just an example event map. It would be better to have a constant,
+  // global event map
+  // in your code that will be used by all path following commands.
+  private final HashMap<String, Command> eventMap = new HashMap<>();
+
   // The autonomous routines
   private final Command driveAuto = Autos.driveBack(drivetrain);
   private final Command balanceAuto = Autos.driveBackAndBalance(drivetrain);
   private final Command scoreAuto = Autos.scoreTwoPieces(drivetrain, mechanism);
-  private final Command exampleAuto = Autos.trajectoryAuto(drivetrain);
+  private final Command scoreAndBalance = Autos.scoreAndBalance(drivetrain, mechanism);
   private final Command plannerAuto = Autos.followTrajectoryCommand(drivetrain,
-      PathPlanner.loadPath("TestPathD", new PathConstraints(3, 1)), true);
+      this.followMap, true);
+
+  private final FollowPathWithEvents advancedAuto = new FollowPathWithEvents(
+      this.plannerAuto,
+      this.followMap.getMarkers(),
+      this.eventMap);
 
   // A chooser for autonomous commands
   SendableChooser<Command> autoChooser = new SendableChooser<>();
 
   public RobotContainer() {
+
+    // Initialize autonomous eventmap options
+    eventMap.put("step1", this.mechanism.setConeLED(true));
+    eventMap.put("step2", this.mechanism.setCubeLED(true));
+
     // Set default commands
+
     // Control the drive with split-stick arcade controls
     this.drivetrain.setDefaultCommand(
         this.drivetrain.arcadeDriveCommand(
@@ -64,8 +88,9 @@ public class RobotContainer {
     this.autoChooser.setDefaultOption("Drive Back", driveAuto);
     this.autoChooser.addOption("Balance", balanceAuto);
     this.autoChooser.addOption("Score", scoreAuto);
-    this.autoChooser.addOption("Example", exampleAuto);
+    this.autoChooser.addOption("Score and Balance", scoreAndBalance);
     this.autoChooser.addOption("Planner", plannerAuto);
+    this.autoChooser.addOption("Advanced", advancedAuto);
 
     SmartDashboard.putData("Autonomous Route", this.autoChooser);
   }
@@ -83,29 +108,34 @@ public class RobotContainer {
    */
   public void configureBindings() {
 
+    // Driver braking and emergency stop controls
     this.driverController.rightBumper().or(this.driverController.y())
         .onTrue(this.drivetrain.enableBrakeMode()).onFalse(this.drivetrain.releaseBrakeMode());
-
-    this.driverController.y().whileTrue(this.drivetrain.balance());
 
     this.driverController.leftBumper()
         .whileTrue(this.drivetrain.enableBrakeMode()
             .andThen(this.drivetrain.emergencyStop()))
         .onFalse(this.drivetrain.releaseBrakeMode());
 
+    // Driver automated routines
     this.driverController.a().whileTrue(this.drivetrain.seekAprilTag());
-    this.driverController.b().onTrue(Commands.runOnce(() -> {
-      this.drivetrain.resetEncoders();
-    }));
+    this.driverController.y().whileTrue(this.drivetrain.balance());
+    this.driverController.b().onTrue(Commands.runOnce(this.drivetrain::resetEncoders));
 
+    // Operator arm preset controls
     this.operatorController.povUp().onTrue(this.mechanism.setArmPreset(MECHANISM.TOP));
+    this.operatorController.povUpLeft().onTrue(this.mechanism.setArmPreset(MECHANISM.STATION));
     this.operatorController.povLeft().onTrue(this.mechanism.setArmPreset(MECHANISM.MID));
     this.operatorController.povDown().onTrue(this.mechanism.setArmPreset(MECHANISM.GROUND));
-    this.operatorController.povRight().onTrue(this.mechanism.setArmPreset(MECHANISM.TRANSPORT));
-    this.operatorController.rightStick().onTrue(this.mechanism.setArmPreset(MECHANISM.STATION));
-    this.operatorController.leftStick().onTrue(this.mechanism.setArmPreset(MECHANISM.DEFAULT));
-    this.operatorController.x().onTrue(this.mechanism.grabGamePiece(this.operatorController.b()));
+    this.operatorController.povDownRight().onTrue(this.mechanism.setArmPreset(MECHANISM.TRANSPORT));
+    this.operatorController.povRight().onTrue(this.mechanism.setArmPreset(MECHANISM.DEFAULT));
+
+    // Operator intake claw controls
+    this.operatorController.x().onTrue(this.mechanism.grabGamePiece());
     this.operatorController.a().onTrue(this.mechanism.releaseGamePiece());
+    this.operatorController.b().onTrue(this.mechanism.disableClaw());
+
+    // Operator game piece signals
     this.operatorController.leftBumper().whileTrue(this.mechanism.blinkCubeLED());
     this.operatorController.rightBumper().whileTrue(this.mechanism.blinkConeLED());
   }
@@ -124,6 +154,9 @@ public class RobotContainer {
     return this.mechanism.setArmPreset(MECHANISM.DEFAULT);
   }
 
+  /**
+   * Resets chassis state
+   */
   public Command CHASSIS_RESET() {
     return this.drivetrain.releaseBrakeMode();
   }
