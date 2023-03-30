@@ -121,8 +121,8 @@ public class Drivetrain extends SubsystemBase {
   public Command arcadeDriveCommand(DoubleSupplier fwd, DoubleSupplier rot,
       DoubleSupplier min, DoubleSupplier max) {
     return runOnce(() -> {
-      this.setMaxOutput(CHASSIS.DEFAULT_OUTPUT + (max.getAsDouble() * CHASSIS.OUTPUT_INTERVAL)
-          - (min.getAsDouble() * CHASSIS.OUTPUT_INTERVAL));
+      this.setMaxOutput(CHASSIS.DEFAULT_OUTPUT + (max.getAsDouble() * CHASSIS.MAX_INTERVAL)
+          - (min.getAsDouble() * CHASSIS.MIN_INTERVAL));
       this.arcadeDrive(fwd.getAsDouble(), rot.getAsDouble());
     })
         .beforeStarting(() -> this.drive.setDeadband(PERIPHERALS.CONTROLLER_DEADBAND))
@@ -265,14 +265,13 @@ public class Drivetrain extends SubsystemBase {
    * Returns a command that stops the drivetrain its tracks.
    */
   public Command emergencyStop() {
-    return runEnd(() -> {
+    return startEnd(() -> {
       this.frontLeftMotor.disable();
       this.frontRightMotor.disable();
       this.backLeftMotor.disable();
       this.backRightMotor.disable();
     }, this::releaseBrakeMode)
         .beforeStarting(this::enableBrakeMode)
-        .ignoringDisable(true)
         .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
   }
 

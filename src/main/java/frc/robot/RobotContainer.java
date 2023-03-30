@@ -45,7 +45,7 @@ public class RobotContainer {
   CommandXboxController operatorController = new CommandXboxController(PERIPHERALS.OPERATOR_PORT);
 
   // The Autonomous trajectory path to follow
-  private final PathPlannerTrajectory followMap = PathPlanner.loadPath("TestPathD", new PathConstraints(3, 1));
+  private final PathPlannerTrajectory followMap = PathPlanner.loadPath("PATH_A", new PathConstraints(3, 1), true);
 
   // This is just an example event map. It would be better to have a constant,
   // global event map
@@ -54,6 +54,7 @@ public class RobotContainer {
 
   // The autonomous routines
   private final Command driveAuto = Autos.driveBack(drivetrain);
+  private final Command turnAuto = Autos.turn(drivetrain);
   private final Command balanceAuto = Autos.driveBackAndBalance(drivetrain);
   private final Command scoreAuto = Autos.scoreTwoPieces(drivetrain, mechanism);
   private final Command scoreAndBalance = Autos.scoreAndBalance(drivetrain, mechanism);
@@ -86,6 +87,7 @@ public class RobotContainer {
 
     // Add commands to the autonomous command chooser
     this.autoChooser.setDefaultOption("Drive Back", driveAuto);
+    this.autoChooser.addOption("Turn", turnAuto);
     this.autoChooser.addOption("Balance", balanceAuto);
     this.autoChooser.addOption("Score", scoreAuto);
     this.autoChooser.addOption("Score and Balance", scoreAndBalance);
@@ -124,14 +126,14 @@ public class RobotContainer {
 
     // Operator arm preset controls
     this.operatorController.povUp().onTrue(this.mechanism.setArmPreset(MECHANISM.TOP));
-    this.operatorController.povUpLeft().onTrue(this.mechanism.setArmPreset(MECHANISM.STATION));
+    this.operatorController.rightStick().onTrue(this.mechanism.setArmPreset(MECHANISM.STATION));
     this.operatorController.povLeft().onTrue(this.mechanism.setArmPreset(MECHANISM.MID));
     this.operatorController.povDown().onTrue(this.mechanism.setArmPreset(MECHANISM.GROUND));
-    this.operatorController.povDownRight().onTrue(this.mechanism.setArmPreset(MECHANISM.TRANSPORT));
     this.operatorController.povRight().onTrue(this.mechanism.setArmPreset(MECHANISM.DEFAULT));
 
     // Operator intake claw controls
-    this.operatorController.x().onTrue(this.mechanism.grabGamePiece());
+    this.operatorController.x().onTrue(this.mechanism.grabCube());
+    this.operatorController.y().onTrue(this.mechanism.grabCone());
     this.operatorController.a().onTrue(this.mechanism.releaseGamePiece());
     this.operatorController.b().onTrue(this.mechanism.disableClaw());
 

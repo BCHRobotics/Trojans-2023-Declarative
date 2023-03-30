@@ -33,6 +33,13 @@ public final class Autos {
   }
 
   /**
+   * A simple auto routine that turns 180 degrees, and then stops.
+   */
+  public static Command turn(Drivetrain drive) {
+    return drive.positionDriveCommand(31, -31).beforeStarting(drive::resetEncoders);
+  }
+
+  /**
    * A complex auto routine that drives backward, then balances
    */
   public static Command driveBackAndBalance(Drivetrain drive) {
@@ -57,28 +64,28 @@ public final class Autos {
         drive.positionDriveCommand(16, 16).beforeStarting(drive::resetEncoders).until(() -> timer.advanceIfElapsed(2)),
 
         drive.positionDriveCommand(-40, -40)
-            .alongWith(mech.releaseGamePiece().andThen(mech.setArmPreset(MECHANISM.TRANSPORT)))
-            .until(() -> timer.advanceIfElapsed(2.5)),
+            .alongWith(mech.releaseGamePiece().andThen(mech.setArmPreset(MECHANISM.DEFAULT)))
+            .until(() -> timer.advanceIfElapsed(6)),
 
-        drive.positionDriveCommand(-72, -8).alongWith(mech.setArmPreset(MECHANISM.GROUND))
-            .until(() -> timer.advanceIfElapsed(3)),
+        drive.positionDriveCommand(-71, -9).alongWith(mech.setArmPreset(MECHANISM.GROUND))
+            .until(() -> timer.advanceIfElapsed(6)),
 
-        drive.positionDriveCommand(-52, 12).until(() -> timer.advanceIfElapsed(1.5)),
+        drive.positionDriveCommand(-51, 11).until(() -> timer.advanceIfElapsed(4)),
 
-        mech.grabGamePiece(),
+        mech.grabCube(),
 
-        drive.positionDriveCommand(-72, -8).alongWith(mech.setArmPreset(MECHANISM.TRANSPORT))
-            .until(() -> timer.advanceIfElapsed(2)),
+        drive.positionDriveCommand(-71, -9).alongWith(mech.setArmPreset(MECHANISM.DEFAULT))
+            .until(() -> timer.advanceIfElapsed(4)),
 
-        drive.positionDriveCommand(-40, -40).until(() -> timer.advanceIfElapsed(2)),
+        drive.positionDriveCommand(-40, -40).until(() -> timer.advanceIfElapsed(4)),
 
         drive.positionDriveCommand(20, 20).alongWith(mech.setArmPreset(MECHANISM.GROUND))
-            .until(() -> timer.advanceIfElapsed(1)),
+            .until(() -> timer.advanceIfElapsed(4)),
 
         mech.releaseGamePiece(),
 
         drive.positionDriveCommand(0, 0).alongWith(mech.setArmPreset(MECHANISM.DEFAULT))
-            .until(() -> timer.advanceIfElapsed(3)))
+            .until(() -> timer.advanceIfElapsed(4)))
         .beforeStarting(timer::restart).andThen(timer::stop);
   }
 

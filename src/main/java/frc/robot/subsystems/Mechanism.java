@@ -54,6 +54,9 @@ public class Mechanism extends SubsystemBase {
     this.wristMotor.setSmartCurrentLimit(60, 20);
     this.wristMotor.setSmartCurrentLimit(5, 5);
 
+    this.clawMotor.setOpenLoopRampRate(0.1);
+    this.clawMotor.enableVoltageCompensation(12);
+
     this.shoulderMotor.setInverted(false);
     this.wristMotor.setInverted(false);
     this.clawMotor.setInverted(true);
@@ -106,7 +109,6 @@ public class Mechanism extends SubsystemBase {
    * @param preset
    */
   public Command setArmPreset(ArmPresets preset) {
-    SmartDashboard.putString("Arm Preset", preset.name);
     return run(() -> {
       this.setShoulderAngle(Math.toDegrees(
           Math.acos((MECHANISM.SHOULDER_HEIGHT - MECHANISM.WRIST_HEIGHT_OFFSET - preset.wristHeight)
@@ -115,6 +117,7 @@ public class Mechanism extends SubsystemBase {
           Math.acos((MECHANISM.SHOULDER_HEIGHT - MECHANISM.WRIST_HEIGHT_OFFSET - preset.wristHeight)
               / MECHANISM.ARM_LENGTH))
           + MECHANISM.WRIST_PARALLEL_OFFSET + preset.wristOffset);
+      SmartDashboard.putString("Arm Preset", preset.name);
     }).withName("setArmPreset");
   }
 
@@ -153,13 +156,30 @@ public class Mechanism extends SubsystemBase {
    * 
    * @return "Grab Game-Piece" Command
    */
-  public Command grabGamePiece() {
-    return runEnd(() -> this.setClawSpeed(0.5), () -> this.setClawSpeed(0.01))
-        .until(this::gamePieceDetected);
+  public Command grabCube() {
+    return startEnd(() -> this.setClawSpeed(0.3), () -> this.setClawSpeed(0.02))
+        .until(() -> this.gamePieceDetected(MECHANISM.CUBE_DETECTION_CURRENT))
+        .andThen(
+            () -> SmartDashboard.putBoolean("Game Piece", true));
   }
 
-  private boolean gamePieceDetected() {
-    return this.clawMotor.getOutputCurrent() > MECHANISM.DETECTION_CURRENT;
+  /**
+   * Runs intake claw to collect game piece until reached proximity
+   * 
+   * @return "Grab Game-Piece" Command
+   */
+  public Command grabCone() {
+    return startEnd(() -> this.setClawSpeed(0.6), () -> this.setClawSpeed(0.02))
+        .until(() -> this.gamePieceDetected(MECHANISM.CONE_DETECTION_CURRENT))
+        .andThen(
+            () -> SmartDashboard.putBoolean("Game Piece", true));
+  }
+
+  /**
+   * Returns whether or not a game piece was detected
+   */
+  private boolean gamePieceDetected(double currentLimit) {
+    return this.clawMotor.getOutputCurrent() >= currentLimit;
   }
 
   /**
@@ -170,9 +190,10 @@ public class Mechanism extends SubsystemBase {
    */
   public Command releaseGamePiece() {
     return Commands.sequence(
-        runOnce(() -> this.setClawSpeed(-1)),
+        runOnce(() -> this.setClawSpeed(-0.4)),
         new WaitCommand(0.8),
-        runOnce(() -> this.setClawSpeed(0)));
+        runOnce(() -> this.setClawSpeed(0)))
+        .beforeStarting(() -> SmartDashboard.putBoolean("Game Piece", false));
   }
 
   /**
@@ -181,7 +202,8 @@ public class Mechanism extends SubsystemBase {
    * @return
    */
   public Command disableClaw() {
-    return runOnce(this.clawMotor::disable);
+    return runOnce(this.clawMotor::disable)
+        .beforeStarting(() -> SmartDashboard.putBoolean("Game Piece", false));
   }
 
   /**
@@ -262,7 +284,6 @@ public class Mechanism extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    // SmartDashboard.putNumber("Game Piece", this.sensor.getProximity());
     // this.wristController.retrieveDashboardConstants();
   }
 }

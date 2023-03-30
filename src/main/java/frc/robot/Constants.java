@@ -26,12 +26,12 @@ public final class Constants {
     // "EWWW, Everything is in metric" -Mechancial Team 2023
 
     // TODO: Get values from sysId
-    public static final double kS = 0.23972;
+    public static final double kS = 0.2397;
     public static final double kV = 1.6742;
-    public static final double kA = 0.86385;
+    public static final double kA = 0.8638;
     public static final double kP = 0.0002827;
 
-    public static final double TRACK_WIDTH = 0.62766; // m
+    public static final double TRACK_WIDTH = 0.63; // m
     public static final DifferentialDriveKinematics DRIVE_KINEMATICS = new DifferentialDriveKinematics(TRACK_WIDTH);
 
     public static final double MAX_SPEED = 3; // m/s
@@ -49,7 +49,8 @@ public final class Constants {
 
     // Drivetrain restrictions
     public static final double DEFAULT_OUTPUT = 0.75;
-    public static final double OUTPUT_INTERVAL = 1.0 - DEFAULT_OUTPUT;
+    public static final double MAX_INTERVAL = 1.0 - DEFAULT_OUTPUT;
+    public static final double MIN_INTERVAL = DEFAULT_OUTPUT - 0.2;
     public static final double RAMP_RATE = 0.15; // s
     public static final double TOLERANCE = 0.05; // in
     public static final boolean INVERTED = false;
@@ -117,7 +118,8 @@ public final class Constants {
     public static final float WRIST_LIMIT = 200 + (float) MECHANISM.WRIST_DEFAULT_OFFSET;
     public static final double SHOUDLER_MAX_EXTENSION_LIMIT = 55;
     public static final double SHOULDER_TOLERANCE = 1;
-    public static final double DETECTION_CURRENT = 6;
+    public static final double CUBE_DETECTION_CURRENT = 20;
+    public static final double CONE_DETECTION_CURRENT = 28;
 
     // Robot arm ABSOLUTE encoder inversions
     public static final boolean SHOULDER_ENCODER_INVERTED = false;
@@ -138,13 +140,12 @@ public final class Constants {
 
     // Arm preset profiles TODO: Verify Presets with Drive Team
     public static final ArmPresets DEFAULT = new ArmPresets(0, -90, "Default");
-    public static final ArmPresets TRANSPORT = new ArmPresets(0, -70, "Transport");
-    public static final ArmPresets GROUND = new ArmPresets(4, 0, "Ground");
-    public static final ArmPresets MID = new ArmPresets(38, 0, "Mid");
-    public static final ArmPresets STATION = new ArmPresets(41, 0, "Station");
-    public static final ArmPresets TOP = new ArmPresets(52, 0, "Top");
+    public static final ArmPresets GROUND = new ArmPresets(5, 0, "Ground");
+    public static final ArmPresets MID = new ArmPresets(26, -55, "Mid");
+    public static final ArmPresets STATION = new ArmPresets(47, 0, "Station");
+    public static final ArmPresets TOP = new ArmPresets(44, -40, "Top");
 
-    public static final ArmPresets[] PRESETS = { DEFAULT, TRANSPORT, GROUND, MID, STATION, TOP };
+    public static final ArmPresets[] PRESETS = { DEFAULT, GROUND, MID, STATION, TOP };
   }
 
   public static final class PERIPHERALS {
