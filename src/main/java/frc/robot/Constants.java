@@ -131,7 +131,7 @@ public final class Constants {
 
     // Mechanism PID Constants TODO: Re-tune after modified wrist installation
     public static final SparkMaxConstants SHOULDER_CONTROL_CONSTANTS = new SparkMaxConstants(
-        0.00014028, 0, 0.00051398, 0, 2e-6, -0.4, 1,
+        0.00014028, 0, 0.00051398, 0, 2e-6, -0.15, 1,
         0, 0, 5700, 3500, 0.2);
 
     public static final SparkMaxConstants WRIST_CONTROL_CONSTANTS = new SparkMaxConstants(
@@ -161,7 +161,7 @@ public final class Constants {
 
     public static final int CUBE_PIPELINE = 0;
     public static final int CONE_PIPELINE = 1;
-    public static final int REFLECTIVE_PIPLINE = 2;
+    public static final int REFLECTIVE_PIPLINE = 3;
     public static final int APRILTAG_PIPELINE = 7;
     public static final int NEURAL_NETWORK_PIPELINE = 4;
 
@@ -170,12 +170,12 @@ public final class Constants {
     public static final double LIMELIGHT_TOLERANCE = 0.5; // degrees (x axis)
     public static final double LIMELIGHT_CHASSIS_OFFSET = 13; // inches
 
-    public static final double MID_ARM_OFFSET = 50; // inches
+    public static final double MID_ARM_OFFSET = 42; // inches
 
     public static final double CUBE_TARGET_HEIGHT = 4.75; // inches
     public static final double CONE_TARGET_HEIGHT = 6.408; // inches
     public static final double APRILTAG_HEIGHT = 18.125; // inches
-    public static final double REFLECTIVE_TAPE_HEIGHT = 30; // inches
+    public static final double REFLECTIVE_TAPE_HEIGHT = 24.125; // inches
   }
 
   public static final class MISC {

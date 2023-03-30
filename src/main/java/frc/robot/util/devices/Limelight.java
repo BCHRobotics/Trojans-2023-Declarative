@@ -94,8 +94,8 @@ public class Limelight {
      */
     public double getTargetDistance() {
         return Math.abs(Math.round(
-                (VISION.LIMELIGHT_HEIGHT - this.targetHeight / Math.tan(
-                        Math.toRadians(VISION.LIMELIGHT_ANGLE + Math.abs(this.getTargetY()))) - VISION.MID_ARM_OFFSET)
+                (((VISION.LIMELIGHT_HEIGHT - this.targetHeight) / Math.tan(
+                        (VISION.LIMELIGHT_ANGLE - this.getTargetY()))) - VISION.MID_ARM_OFFSET)
                         * 100.0)
                 / 100.0); // distance from target in inches
     }
@@ -106,6 +106,6 @@ public class Limelight {
      * @return reached target
      */
     public boolean reachedTargetX() {
-        return (MISC.WITHIN_TOLERANCE(getTargetX(), VISION.LIMELIGHT_TOLERANCE));
+        return (MISC.WITHIN_TOLERANCE(getTargetX(), 0, VISION.LIMELIGHT_TOLERANCE));
     }
 }

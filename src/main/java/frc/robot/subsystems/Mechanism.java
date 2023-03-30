@@ -88,8 +88,6 @@ public class Mechanism extends SubsystemBase {
     this.shoulderController = new SparkMaxPID(this.shoulderMotor, MECHANISM.SHOULDER_CONTROL_CONSTANTS);
     this.wristController = new SparkMaxPID(this.wristMotor, MECHANISM.WRIST_CONTROL_CONSTANTS);
 
-    // this.wristController.pushConstantsToDashboard("Wrist");
-
     this.shoulderController.setFeedbackDevice(shoulderEncoder);
     this.wristController.setFeedbackDevice(wristEncoder);
 
@@ -145,7 +143,8 @@ public class Mechanism extends SubsystemBase {
     this.wristController.setSmartPosition(angle, MECHANISM.WRIST_DEFAULT_OFFSET,
         this.getShoulderPosition() < MECHANISM.SHOUDLER_MAX_EXTENSION_LIMIT
             ? ((this.shoulderEncoder.getPosition() - MECHANISM.SHOULDER_DEFAULT_OFFSET)
-                / (MECHANISM.SHOUDLER_MAX_EXTENSION_LIMIT - MECHANISM.SHOULDER_DEFAULT_OFFSET)
+                / (MECHANISM.SHOUDLER_MAX_EXTENSION_LIMIT -
+                    MECHANISM.SHOULDER_DEFAULT_OFFSET)
                 * (MECHANISM.WRIST_LIMIT - MECHANISM.WRIST_PARALLEL_OFFSET)
                 + MECHANISM.WRIST_PARALLEL_OFFSET + MECHANISM.WRIST_DEFAULT_OFFSET)
             : MECHANISM.WRIST_LIMIT);
@@ -284,6 +283,5 @@ public class Mechanism extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    // this.wristController.retrieveDashboardConstants();
   }
 }

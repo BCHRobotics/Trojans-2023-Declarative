@@ -5,6 +5,7 @@
 package frc.robot.subsystems;
 
 import frc.robot.Constants.CHASSIS;
+import frc.robot.Constants.MISC;
 import frc.robot.Constants.PERIPHERALS;
 import frc.robot.Constants.VISION.TARGET_TYPE;
 import frc.robot.util.control.SparkMaxPID;
@@ -102,7 +103,7 @@ public class Drivetrain extends SubsystemBase {
     // Objects for balancing
     this.gyro = Gyro.getInstance();
     this.limelight = Limelight.getInstance();
-    this.limelight.setDesiredTarget(TARGET_TYPE.APRILTAG);
+    this.limelight.setDesiredTarget(TARGET_TYPE.REFLECTIVE_TAPE);
 
     this.driveOdometry = new DifferentialDriveOdometry(this.gyro.getRotation2d(),
         Units.inchesToMeters(this.getLeftPosition()),
@@ -200,16 +201,33 @@ public class Drivetrain extends SubsystemBase {
    * Uses smart-motion to turn to a limelight target
    */
   public Command seekTarget() {
-    return this.positionDriveCommand(this.limelight.getTargetX() * CHASSIS.TURNING_CONVERSION,
-        -this.limelight.getTargetX() * CHASSIS.TURNING_CONVERSION).beforeStarting(this::resetEncoders);
+    return startEnd(() -> {
+      this.setPosition((this.limelight.getTargetX() * CHASSIS.TURNING_CONVERSION),
+          -(this.limelight.getTargetX() * CHASSIS.TURNING_CONVERSION));
+    },
+        this::emergencyStop)
+        .until(this.limelight::reachedTargetX)
+        .beforeStarting(this::enableBrakeMode)
+        .beforeStarting(this::disableRampRate)
+        .beforeStarting(this::resetEncoders)
+        .beforeStarting(() -> this.setMaxOutput(1))
+        .withName("huntTarget");
   }
 
   /**
    * Uses smart-motion to drive towards a limelight target
    */
   public Command goToTarget() {
-    return this.positionDriveCommand(this.limelight.getTargetDistance(), this.limelight.getTargetDistance())
-        .beforeStarting(this::resetEncoders);
+    return startEnd(() -> {
+      this.setPosition(this.limelight.getTargetDistance(), this.limelight.getTargetDistance());
+    },
+        this::emergencyStop)
+        .until(this::reachedPosition)
+        .beforeStarting(this::enableBrakeMode)
+        .beforeStarting(this::disableRampRate)
+        .beforeStarting(this::resetEncoders)
+        .beforeStarting(() -> this.setMaxOutput(1))
+        .withName("goToTarget");
   }
 
   /**

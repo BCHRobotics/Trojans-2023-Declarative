@@ -120,7 +120,8 @@ public class RobotContainer {
         .onFalse(this.drivetrain.releaseBrakeMode());
 
     // Driver automated routines
-    this.driverController.a().whileTrue(this.drivetrain.seekAprilTag());
+    this.driverController.a().whileTrue(this.drivetrain.seekTarget());
+    this.driverController.x().whileTrue(this.drivetrain.goToTarget());
     this.driverController.y().whileTrue(this.drivetrain.balance());
     this.driverController.b().onTrue(Commands.runOnce(this.drivetrain::resetEncoders));
 
