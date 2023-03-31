@@ -44,8 +44,11 @@ public class RobotContainer {
   CommandXboxController driverController = new CommandXboxController(PERIPHERALS.DRIVER_PORT);
   CommandXboxController operatorController = new CommandXboxController(PERIPHERALS.OPERATOR_PORT);
 
+  private final Command scoreGamePiece = Autos.automatedScoringCommand(drivetrain, mechanism);
+
   // The Autonomous trajectory path to follow
-  private final PathPlannerTrajectory followMap = PathPlanner.loadPath("PATH_A", new PathConstraints(3, 1), true);
+  private final PathPlannerTrajectory followMap = PathPlanner.loadPath("DoubleScore_V.1.0",
+      new PathConstraints(3, 1.5), true);
 
   // This is just an example event map. It would be better to have a constant,
   // global event map
@@ -72,8 +75,19 @@ public class RobotContainer {
   public RobotContainer() {
 
     // Initialize autonomous eventmap options
-    eventMap.put("step1", this.mechanism.setConeLED(true));
-    eventMap.put("step2", this.mechanism.setCubeLED(true));
+    eventMap.put("DropPreload", this.mechanism.setConeLED(true));
+    eventMap.put("DropWrist", this.mechanism.setCubeLED(true));
+    eventMap.put("GrabGamePiece", this.mechanism.setConeLED(false));
+    eventMap.put("StowWrist", this.mechanism.setCubeLED(false));
+    eventMap.put("ArmMidPreset", this.mechanism.setCubeLED(true));
+    eventMap.put("ReleaseGamePiece", this.mechanism.setConeLED(true));
+
+    // eventMap.put("DropPreload", this.mechanism.releaseGamePiece());
+    // eventMap.put("DropWrist", this.mechanism.setArmPreset(MECHANISM.GROUND));
+    // eventMap.put("GrabGamePiece", this.mechanism.grabCube());
+    // eventMap.put("StowWrist", this.mechanism.setArmPreset(MECHANISM.DEFAULT));
+    // eventMap.put("ArmMidPreset", this.mechanism.setArmPreset(MECHANISM.MID));
+    // eventMap.put("ReleaseGamePiece", this.mechanism.releaseGamePiece());
 
     // Set default commands
 
@@ -124,6 +138,7 @@ public class RobotContainer {
     this.driverController.x().whileTrue(this.drivetrain.goToTarget());
     this.driverController.y().whileTrue(this.drivetrain.balance());
     this.driverController.b().onTrue(Commands.runOnce(this.drivetrain::resetEncoders));
+    this.driverController.povRight().onTrue(this.scoreGamePiece);
 
     // Operator arm preset controls
     this.operatorController.povUp().onTrue(this.mechanism.setArmPreset(MECHANISM.TOP));

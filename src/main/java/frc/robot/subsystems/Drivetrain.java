@@ -5,17 +5,19 @@
 package frc.robot.subsystems;
 
 import frc.robot.Constants.CHASSIS;
-import frc.robot.Constants.MISC;
+import frc.robot.Constants.PATHING;
 import frc.robot.Constants.PERIPHERALS;
+import frc.robot.Constants.VISION;
 import frc.robot.Constants.VISION.TARGET_TYPE;
 import frc.robot.util.control.SparkMaxPID;
 import frc.robot.util.devices.Gyro;
 import frc.robot.util.devices.Limelight;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.estimator.DifferentialDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -45,7 +47,7 @@ public class Drivetrain extends SubsystemBase {
   private final SparkMaxPID rightMotorController;
 
   private final DifferentialDrive drive;
-  private final DifferentialDriveOdometry driveOdometry;
+  private final DifferentialDrivePoseEstimator driveOdometry;
 
   // Objects for gyroscope odometry and balancing
   private final Gyro gyro;
@@ -98,16 +100,15 @@ public class Drivetrain extends SubsystemBase {
     this.leftMotorController.setMotionProfileType(AccelStrategy.kTrapezoidal);
     this.rightMotorController.setMotionProfileType(AccelStrategy.kTrapezoidal);
 
-    this.drive = new DifferentialDrive(this.frontLeftMotor, this.frontRightMotor);
-
-    // Objects for balancing
     this.gyro = Gyro.getInstance();
     this.limelight = Limelight.getInstance();
-    this.limelight.setDesiredTarget(TARGET_TYPE.REFLECTIVE_TAPE);
+    this.limelight.setDesiredTarget(TARGET_TYPE.APRILTAG);
 
-    this.driveOdometry = new DifferentialDriveOdometry(this.gyro.getRotation2d(),
+    this.drive = new DifferentialDrive(this.frontLeftMotor, this.frontRightMotor);
+
+    this.driveOdometry = new DifferentialDrivePoseEstimator(PATHING.DRIVE_KINEMATICS, this.gyro.getRotation2d(),
         Units.inchesToMeters(this.getLeftPosition()),
-        Units.inchesToMeters(this.getRightPosition()));
+        Units.inchesToMeters(this.getRightPosition()), this.limelight.getPose2d());
 
   }
 
@@ -143,7 +144,6 @@ public class Drivetrain extends SubsystemBase {
         .until(this::reachedPosition)
         .beforeStarting(this::enableBrakeMode)
         .beforeStarting(this::disableRampRate)
-        .beforeStarting(() -> this.setMaxOutput(1))
         .withName("positionDrive");
   }
 
@@ -210,7 +210,8 @@ public class Drivetrain extends SubsystemBase {
         .beforeStarting(this::enableBrakeMode)
         .beforeStarting(this::disableRampRate)
         .beforeStarting(this::resetEncoders)
-        .beforeStarting(() -> this.setMaxOutput(1))
+        .beforeStarting(this::searchForTape)
+        .andThen(this::searchForTags)
         .withName("huntTarget");
   }
 
@@ -218,16 +219,10 @@ public class Drivetrain extends SubsystemBase {
    * Uses smart-motion to drive towards a limelight target
    */
   public Command goToTarget() {
-    return startEnd(() -> {
-      this.setPosition(this.limelight.getTargetDistance(), this.limelight.getTargetDistance());
-    },
-        this::emergencyStop)
-        .until(this::reachedPosition)
-        .beforeStarting(this::enableBrakeMode)
-        .beforeStarting(this::disableRampRate)
-        .beforeStarting(this::resetEncoders)
-        .beforeStarting(() -> this.setMaxOutput(1))
-        .withName("goToTarget");
+    return this.positionDriveCommand(this.limelight.getTargetDistance() - VISION.MID_ARM_OFFSET,
+        this.limelight.getTargetDistance() - VISION.MID_ARM_OFFSET)
+        .beforeStarting(this::searchForTape)
+        .andThen(this::searchForTags);
   }
 
   /**
@@ -294,7 +289,7 @@ public class Drivetrain extends SubsystemBase {
   }
 
   /**
-   * basically like e-stop command for disabled mode only
+   * Basically like e-stop command for disabled mode only
    */
   public void killSwitch() {
     this.frontLeftMotor.disable();
@@ -431,14 +426,14 @@ public class Drivetrain extends SubsystemBase {
    * Sets the limelight target to search for reflective
    * tape.
    */
-  public void searchForTape() {
+  private void searchForTape() {
     this.limelight.setDesiredTarget(TARGET_TYPE.REFLECTIVE_TAPE);
   }
 
   /**
    * Sets the limelight target to search for april tags.
    */
-  public void searchForTags() {
+  private void searchForTags() {
     this.limelight.setDesiredTarget(TARGET_TYPE.APRILTAG);
   }
 
@@ -450,7 +445,7 @@ public class Drivetrain extends SubsystemBase {
    * @return The pose.
    */
   public Pose2d getPose() {
-    return this.driveOdometry.getPoseMeters();
+    return this.driveOdometry.getEstimatedPosition();
   }
 
   /**
@@ -516,6 +511,10 @@ public class Drivetrain extends SubsystemBase {
     this.driveOdometry.update(this.gyro.getRotation2d(),
         Units.inchesToMeters(this.getLeftPosition()),
         Units.inchesToMeters(this.getRightPosition()));
+
+    if (this.limelight.getDesiredTarget() == TARGET_TYPE.APRILTAG && this.limelight.getTargetExists()) {
+      this.driveOdometry.addVisionMeasurement(this.limelight.getPose2d(), Timer.getFPGATimestamp());
+    }
 
     this.drive.feed();
 

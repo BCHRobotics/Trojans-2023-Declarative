@@ -3,7 +3,8 @@ package frc.robot.util.devices;
 import frc.robot.Constants.MISC;
 import frc.robot.Constants.VISION;
 import frc.robot.Constants.VISION.TARGET_TYPE;
-
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
@@ -28,14 +29,6 @@ public class Limelight {
     public void setDesiredTarget(TARGET_TYPE target) {
         this.currentTarget = target;
         switch (target) {
-            case CONE:
-                this.targetHeight = VISION.CONE_TARGET_HEIGHT;
-                this.setPipeline(VISION.CONE_PIPELINE);
-                break;
-            case CUBE:
-                this.targetHeight = VISION.CUBE_TARGET_HEIGHT;
-                this.setPipeline(VISION.CUBE_PIPELINE);
-                break;
             case REFLECTIVE_TAPE:
                 this.targetHeight = VISION.REFLECTIVE_TAPE_HEIGHT;
                 this.setPipeline(VISION.REFLECTIVE_PIPLINE);
@@ -43,10 +36,6 @@ public class Limelight {
             case APRILTAG:
                 this.targetHeight = VISION.APRILTAG_HEIGHT;
                 this.setPipeline(VISION.APRILTAG_PIPELINE);
-                break;
-            case GAMEPIECE:
-                this.targetHeight = 0;
-                this.setPipeline(VISION.NEURAL_NETWORK_PIPELINE);
                 break;
             default:
                 this.targetHeight = 0;
@@ -88,16 +77,34 @@ public class Limelight {
     }
 
     /**
+     * Get bot pose (position and rotation) in 3D field space
+     * 
+     * @return
+     */
+    public double[] getBotPose() {
+        return this.networkTable.getEntry("botpose").getDoubleArray(new double[6]);
+    }
+
+    /**
+     * Get limelight april tag detected position
+     * 
+     * @return
+     */
+    public Pose2d getPose2d() {
+        return new Pose2d(this.getBotPose()[0], this.getBotPose()[1], new Rotation2d(this.getBotPose()[3]));
+    }
+
+    /**
      * Get the distance to the target using Trigonometry
      * 
      * @return distance to target
      */
     public double getTargetDistance() {
-        return Math.abs(Math.round(
-                (((VISION.LIMELIGHT_HEIGHT - this.targetHeight) / Math.tan(
-                        (VISION.LIMELIGHT_ANGLE - this.getTargetY()))) - VISION.MID_ARM_OFFSET)
-                        * 100.0)
-                / 100.0); // distance from target in inches
+        return Math.abs(
+                Math.round(
+                        ((VISION.LIMELIGHT_HEIGHT - this.targetHeight) /
+                                Math.tan(VISION.LIMELIGHT_ANGLE - this.getTargetY())) * 10)
+                        / 10); // distance from target in inches
     }
 
     /**

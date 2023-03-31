@@ -29,14 +29,14 @@ public final class Autos {
    * stops.
    */
   public static Command driveBack(Drivetrain drive) {
-    return drive.positionDriveCommand(-160, -160).beforeStarting(drive::resetEncoders);
+    return drive.positionDriveCommand(-160, -160).beforeStarting(Commands.runOnce(drive::resetEncoders));
   }
 
   /**
    * A simple auto routine that turns 180 degrees, and then stops.
    */
   public static Command turn(Drivetrain drive) {
-    return drive.positionDriveCommand(31, -31).beforeStarting(drive::resetEncoders);
+    return drive.positionDriveCommand(31, -31).beforeStarting(Commands.runOnce(drive::resetEncoders));
   }
 
   /**
@@ -45,7 +45,7 @@ public final class Autos {
   public static Command driveBackAndBalance(Drivetrain drive) {
     return Commands.sequence(
         // Drive onto the charging station
-        drive.positionDriveCommand(-102, -102).beforeStarting(drive::resetEncoders),
+        drive.positionDriveCommand(-102, -102).beforeStarting(Commands.runOnce(drive::resetEncoders)),
 
         // Balance the robot
         drive.balance());
@@ -61,7 +61,7 @@ public final class Autos {
         // Raise arm to reach target
         mech.setArmPreset(MECHANISM.MID).until(() -> timer.advanceIfElapsed(1)),
 
-        drive.positionDriveCommand(16, 16).beforeStarting(drive::resetEncoders).until(() -> timer.advanceIfElapsed(2)),
+        drive.positionDriveCommand(16, 16).until(() -> timer.advanceIfElapsed(2)),
 
         drive.positionDriveCommand(-40, -40)
             .alongWith(mech.releaseGamePiece().andThen(mech.setArmPreset(MECHANISM.DEFAULT)))
@@ -86,7 +86,9 @@ public final class Autos {
 
         drive.positionDriveCommand(0, 0).alongWith(mech.setArmPreset(MECHANISM.DEFAULT))
             .until(() -> timer.advanceIfElapsed(4)))
-        .beforeStarting(timer::restart).andThen(timer::stop);
+        .beforeStarting(timer::restart)
+        .beforeStarting(Commands.runOnce(drive::resetEncoders))
+        .andThen(timer::stop);
   }
 
   /**
@@ -102,7 +104,20 @@ public final class Autos {
         drive.positionDriveCommand(0, 0),
 
         // Balance the robot
-        drive.balance()).beforeStarting(drive::resetEncoders);
+        drive.balance()).beforeStarting(Commands.runOnce(drive::resetEncoders));
+  }
+
+  /**
+   * A highly sophisticated auto routine that places a cone on the middle peg
+   * autonomously, this is for driver use during teleop.
+   */
+  public static Command automatedScoringCommand(Drivetrain drive, Mechanism mech) {
+    return Commands.sequence(
+        drive.seekTarget(),
+
+        mech.setArmPreset(MECHANISM.MID).alongWith(drive.goToTarget()),
+
+        mech.releaseGamePiece());
   }
 
   /**

@@ -52,14 +52,14 @@ public class Mechanism extends SubsystemBase {
 
     this.shoulderMotor.setSmartCurrentLimit(60, 20);
     this.wristMotor.setSmartCurrentLimit(60, 20);
-    this.wristMotor.setSmartCurrentLimit(5, 5);
-
-    this.clawMotor.setOpenLoopRampRate(0.1);
-    this.clawMotor.enableVoltageCompensation(12);
+    this.clawMotor.setSmartCurrentLimit(40, 8);
 
     this.shoulderMotor.setInverted(false);
     this.wristMotor.setInverted(false);
     this.clawMotor.setInverted(true);
+
+    this.clawMotor.setOpenLoopRampRate(0.1);
+    this.clawMotor.enableVoltageCompensation(12);
 
     this.shoulderEncoder = this.shoulderMotor.getAbsoluteEncoder(Type.kDutyCycle);
     this.wristEncoder = this.wristMotor.getAbsoluteEncoder(Type.kDutyCycle);
@@ -157,7 +157,7 @@ public class Mechanism extends SubsystemBase {
    */
   public Command grabCube() {
     return startEnd(() -> this.setClawSpeed(0.3), () -> this.setClawSpeed(0.02))
-        .until(() -> this.gamePieceDetected(MECHANISM.CUBE_DETECTION_CURRENT))
+        .until(() -> this.gamePieceDetected(MISC.CUBE_DETECTION_CURRENT))
         .andThen(
             () -> SmartDashboard.putBoolean("Game Piece", true));
   }
@@ -169,7 +169,7 @@ public class Mechanism extends SubsystemBase {
    */
   public Command grabCone() {
     return startEnd(() -> this.setClawSpeed(0.6), () -> this.setClawSpeed(0.02))
-        .until(() -> this.gamePieceDetected(MECHANISM.CONE_DETECTION_CURRENT))
+        .until(() -> this.gamePieceDetected(MISC.CONE_DETECTION_CURRENT))
         .andThen(
             () -> SmartDashboard.putBoolean("Game Piece", true));
   }
@@ -248,7 +248,6 @@ public class Mechanism extends SubsystemBase {
    * @return "Toggle Cone LED" Command
    */
   public Command setConeLED(boolean state) {
-    SmartDashboard.putBoolean("Cone Request", state);
     return runOnce(() -> this.coneLED.set(state));
   }
 
@@ -258,7 +257,6 @@ public class Mechanism extends SubsystemBase {
    * @return "Toggle Cube LED" Command
    */
   public Command setCubeLED(boolean state) {
-    SmartDashboard.putBoolean("Cube Request", state);
     return runOnce(() -> this.cubeLED.set(state));
   }
 
@@ -283,5 +281,8 @@ public class Mechanism extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
+
+    SmartDashboard.putBoolean("Cube Request", this.cubeLED.get());
+    SmartDashboard.putBoolean("Cone Request", this.coneLED.get());
   }
 }

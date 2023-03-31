@@ -1,0 +1,147 @@
+{
+  "waypoints": [
+    {
+      "anchorPoint": {
+        "x": 1.88,
+        "y": 4.42
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 2.959510661292514,
+        "y": 4.42
+      },
+      "holonomicAngle": 0,
+      "isReversal": false,
+      "velOverride": null,
+      "isLocked": true,
+      "isStopPoint": false,
+      "stopEvent": {
+        "names": [
+          "DropPreload"
+        ],
+        "executionBehavior": "parallel",
+        "waitBehavior": "none",
+        "waitTime": 0
+      }
+    },
+    {
+      "anchorPoint": {
+        "x": 4.24,
+        "y": 6.0
+      },
+      "prevControl": {
+        "x": 4.234800378691666,
+        "y": 4.837081765072622
+      },
+      "nextControl": {
+        "x": 4.234800378691666,
+        "y": 4.837081765072622
+      },
+      "holonomicAngle": 0,
+      "isReversal": true,
+      "velOverride": null,
+      "isLocked": false,
+      "isStopPoint": false,
+      "stopEvent": {
+        "names": [],
+        "executionBehavior": "parallel",
+        "waitBehavior": "none",
+        "waitTime": 0
+      }
+    },
+    {
+      "anchorPoint": {
+        "x": 6.329958205370955,
+        "y": 4.6
+      },
+      "prevControl": {
+        "x": 5.700827333843046,
+        "y": 4.6
+      },
+      "nextControl": {
+        "x": 5.700827333843046,
+        "y": 4.6
+      },
+      "holonomicAngle": 0,
+      "isReversal": true,
+      "velOverride": null,
+      "isLocked": false,
+      "isStopPoint": true,
+      "stopEvent": {
+        "names": [
+          "GrabGamePiece",
+          "StowWrist"
+        ],
+        "executionBehavior": "parallel",
+        "waitBehavior": "none",
+        "waitTime": 0
+      }
+    },
+    {
+      "anchorPoint": {
+        "x": 4.24,
+        "y": 6.0
+      },
+      "prevControl": {
+        "x": 4.24,
+        "y": 4.846184522700688
+      },
+      "nextControl": {
+        "x": 4.24,
+        "y": 4.846184522700688
+      },
+      "holonomicAngle": 0,
+      "isReversal": true,
+      "velOverride": null,
+      "isLocked": false,
+      "isStopPoint": false,
+      "stopEvent": {
+        "names": [],
+        "executionBehavior": "parallel",
+        "waitBehavior": "none",
+        "waitTime": 0
+      }
+    },
+    {
+      "anchorPoint": {
+        "x": 2.3005214617897343,
+        "y": 4.598063428002915
+      },
+      "prevControl": {
+        "x": 3.066194265043445,
+        "y": 4.733072201611228
+      },
+      "nextControl": null,
+      "holonomicAngle": 0,
+      "isReversal": false,
+      "velOverride": null,
+      "isLocked": false,
+      "isStopPoint": false,
+      "stopEvent": {
+        "names": [
+          "ReleaseGamePiece"
+        ],
+        "executionBehavior": "parallel",
+        "waitBehavior": "none",
+        "waitTime": 0
+      }
+    }
+  ],
+  "maxVelocity": 3.0,
+  "maxAcceleration": 1.5,
+  "isReversed": true,
+  "markers": [
+    {
+      "position": 1.2000000000000004,
+      "names": [
+        "DropWrist"
+      ]
+    },
+    {
+      "position": 3.3454545454545452,
+      "names": [
+        "ArmMidPreset"
+      ]
+    }
+  ]
+}

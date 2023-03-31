@@ -111,15 +111,13 @@ public final class Constants {
     // Robot arm conversion factors
     public static final double SHOULDER_CONVERSION_FACTOR = 360; // Convert revs to degrees
     public static final double WRIST_CONVERSION_FACTOR = 360; // Convert revs to degrees
-    public static final double WRIST_PARALLEL_OFFSET = 90;
     public static final double SHOULDER_DEFAULT_OFFSET = 17;
     public static final double WRIST_DEFAULT_OFFSET = SHOULDER_DEFAULT_OFFSET;
+    public static final double WRIST_PARALLEL_OFFSET = 90;
     public static final float SHOULDER_LIMIT = 130 + (float) MECHANISM.SHOULDER_DEFAULT_OFFSET;
     public static final float WRIST_LIMIT = 200 + (float) MECHANISM.WRIST_DEFAULT_OFFSET;
     public static final double SHOUDLER_MAX_EXTENSION_LIMIT = 55;
     public static final double SHOULDER_TOLERANCE = 1;
-    public static final double CUBE_DETECTION_CURRENT = 20;
-    public static final double CONE_DETECTION_CURRENT = 28;
 
     // Robot arm ABSOLUTE encoder inversions
     public static final boolean SHOULDER_ENCODER_INVERTED = false;
@@ -156,24 +154,22 @@ public final class Constants {
 
   public static final class VISION {
     public enum TARGET_TYPE {
-      CONE, CUBE, APRILTAG, REFLECTIVE_TAPE, GAMEPIECE, NOTHING
+      APRILTAG, REFLECTIVE_TAPE
     }
 
     public static final int CUBE_PIPELINE = 0;
     public static final int CONE_PIPELINE = 1;
     public static final int REFLECTIVE_PIPLINE = 3;
-    public static final int APRILTAG_PIPELINE = 7;
     public static final int NEURAL_NETWORK_PIPELINE = 4;
+    public static final int APRILTAG_PIPELINE = 7;
 
     public static final double LIMELIGHT_ANGLE = 21.5; // degrees
     public static final double LIMELIGHT_HEIGHT = 91.25; // inches
-    public static final double LIMELIGHT_TOLERANCE = 0.5; // degrees (x axis)
+    public static final double LIMELIGHT_TOLERANCE = 0.2; // degrees (x axis)
     public static final double LIMELIGHT_CHASSIS_OFFSET = 13; // inches
 
     public static final double MID_ARM_OFFSET = 42; // inches
 
-    public static final double CUBE_TARGET_HEIGHT = 4.75; // inches
-    public static final double CONE_TARGET_HEIGHT = 6.408; // inches
     public static final double APRILTAG_HEIGHT = 18.125; // inches
     public static final double REFLECTIVE_TAPE_HEIGHT = 24.125; // inches
   }
@@ -186,7 +182,8 @@ public final class Constants {
     public static final int CONE_LED_PORT = 0;
     public static final int CUBE_LED_PORT = 1;
 
-    public static final int GAMEPIECE_PROXIMITY = 800;
+    public static final double CUBE_DETECTION_CURRENT = 20;
+    public static final double CONE_DETECTION_CURRENT = 28;
 
     public static final double BLINK_INTERVAL = 0.5; // seconds
 
