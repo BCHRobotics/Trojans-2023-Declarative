@@ -512,9 +512,11 @@ public class Drivetrain extends SubsystemBase {
         Units.inchesToMeters(this.getLeftPosition()),
         Units.inchesToMeters(this.getRightPosition()));
 
-    if (this.limelight.getDesiredTarget() == TARGET_TYPE.APRILTAG && this.limelight.getTargetExists()) {
-      this.driveOdometry.addVisionMeasurement(this.limelight.getPose2d(), Timer.getFPGATimestamp());
-    }
+    // if (this.limelight.getDesiredTarget() == TARGET_TYPE.APRILTAG &&
+    // this.limelight.getTargetExists()) {
+    // this.driveOdometry.addVisionMeasurement(this.limelight.getPose2d(),
+    // Timer.getFPGATimestamp());
+    // }
 
     this.drive.feed();
 

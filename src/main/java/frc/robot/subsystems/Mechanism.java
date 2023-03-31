@@ -196,6 +196,20 @@ public class Mechanism extends SubsystemBase {
   }
 
   /**
+   * Runs intake claw to launch game piece, waits 0.6 seconds then stops the
+   * motor
+   * 
+   * @return "Launch Game-Piece" Command
+   */
+  public Command launchGamePiece() {
+    return Commands.sequence(
+        runOnce(() -> this.setClawSpeed(-1)),
+        new WaitCommand(0.8),
+        runOnce(() -> this.setClawSpeed(0)))
+        .beforeStarting(() -> SmartDashboard.putBoolean("Game Piece", false));
+  }
+
+  /**
    * Disables intake claw motor
    * 
    * @return
@@ -210,6 +224,10 @@ public class Mechanism extends SubsystemBase {
    */
   private void setClawSpeed(double speed) {
     this.clawMotor.set(speed);
+  }
+
+  public void shutDown() {
+    this.setClawSpeed(0);
   }
 
   /**

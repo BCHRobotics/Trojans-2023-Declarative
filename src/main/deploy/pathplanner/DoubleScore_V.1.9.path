@@ -16,9 +16,7 @@
       "isLocked": true,
       "isStopPoint": false,
       "stopEvent": {
-        "names": [
-          "DropPreload"
-        ],
+        "names": [],
         "executionBehavior": "parallel",
         "waitBehavior": "none",
         "waitTime": 0
@@ -30,12 +28,12 @@
         "y": 6.0
       },
       "prevControl": {
-        "x": 4.234800378691666,
-        "y": 4.837081765072622
+        "x": 4.24,
+        "y": 4.837070140899135
       },
       "nextControl": {
-        "x": 4.234800378691666,
-        "y": 4.837081765072622
+        "x": 4.24,
+        "y": 4.837070140899135
       },
       "holonomicAngle": 0,
       "isReversal": true,
@@ -51,15 +49,15 @@
     },
     {
       "anchorPoint": {
-        "x": 6.329958205370955,
+        "x": 6.38,
         "y": 4.6
       },
       "prevControl": {
-        "x": 5.700827333843046,
+        "x": 5.7508691284720905,
         "y": 4.6
       },
       "nextControl": {
-        "x": 5.700827333843046,
+        "x": 5.7508691284720905,
         "y": 4.6
       },
       "holonomicAngle": 0,
@@ -68,10 +66,7 @@
       "isLocked": false,
       "isStopPoint": true,
       "stopEvent": {
-        "names": [
-          "GrabGamePiece",
-          "StowWrist"
-        ],
+        "names": [],
         "executionBehavior": "parallel",
         "waitBehavior": "none",
         "waitTime": 0
@@ -104,12 +99,12 @@
     },
     {
       "anchorPoint": {
-        "x": 2.3005214617897343,
-        "y": 4.598063428002915
+        "x": 2.12,
+        "y": 4.46
       },
       "prevControl": {
-        "x": 3.066194265043445,
-        "y": 4.733072201611228
+        "x": 3.031088277874496,
+        "y": 4.46
       },
       "nextControl": null,
       "holonomicAngle": 0,
@@ -118,9 +113,7 @@
       "isLocked": false,
       "isStopPoint": false,
       "stopEvent": {
-        "names": [
-          "ReleaseGamePiece"
-        ],
+        "names": [],
         "executionBehavior": "parallel",
         "waitBehavior": "none",
         "waitTime": 0
@@ -128,19 +121,43 @@
     }
   ],
   "maxVelocity": 3.0,
-  "maxAcceleration": 1.5,
+  "maxAcceleration": 1.0,
   "isReversed": true,
   "markers": [
     {
-      "position": 1.2000000000000004,
+      "position": 0.0,
+      "names": [
+        "DropPreload"
+      ]
+    },
+    {
+      "position": 0.8,
       "names": [
         "DropWrist"
       ]
     },
     {
-      "position": 3.3454545454545452,
+      "position": 1.6,
+      "names": [
+        "GrabGamePiece"
+      ]
+    },
+    {
+      "position": 2.1,
+      "names": [
+        "StowWrist"
+      ]
+    },
+    {
+      "position": 3.4,
       "names": [
         "ArmMidPreset"
+      ]
+    },
+    {
+      "position": 4.0,
+      "names": [
+        "ReleaseGamePiece"
       ]
     }
   ]

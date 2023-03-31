@@ -64,27 +64,27 @@ public final class Autos {
         drive.positionDriveCommand(16, 16).until(() -> timer.advanceIfElapsed(2)),
 
         drive.positionDriveCommand(-40, -40)
-            .alongWith(mech.releaseGamePiece().andThen(mech.setArmPreset(MECHANISM.DEFAULT)))
+            .alongWith(mech.releaseGamePiece().andThen(mech.setArmPreset(MECHANISM.HOME)))
             .until(() -> timer.advanceIfElapsed(6)),
 
-        drive.positionDriveCommand(-71, -9).alongWith(mech.setArmPreset(MECHANISM.GROUND))
+        drive.positionDriveCommand(-71, -9).alongWith(mech.setArmPreset(MECHANISM.LOW))
             .until(() -> timer.advanceIfElapsed(6)),
 
         drive.positionDriveCommand(-51, 11).until(() -> timer.advanceIfElapsed(4)),
 
         mech.grabCube(),
 
-        drive.positionDriveCommand(-71, -9).alongWith(mech.setArmPreset(MECHANISM.DEFAULT))
+        drive.positionDriveCommand(-71, -9).alongWith(mech.setArmPreset(MECHANISM.HOME))
             .until(() -> timer.advanceIfElapsed(4)),
 
         drive.positionDriveCommand(-40, -40).until(() -> timer.advanceIfElapsed(4)),
 
-        drive.positionDriveCommand(20, 20).alongWith(mech.setArmPreset(MECHANISM.GROUND))
+        drive.positionDriveCommand(20, 20).alongWith(mech.setArmPreset(MECHANISM.LOW))
             .until(() -> timer.advanceIfElapsed(4)),
 
         mech.releaseGamePiece(),
 
-        drive.positionDriveCommand(0, 0).alongWith(mech.setArmPreset(MECHANISM.DEFAULT))
+        drive.positionDriveCommand(0, 0).alongWith(mech.setArmPreset(MECHANISM.HOME))
             .until(() -> timer.advanceIfElapsed(4)))
         .beforeStarting(timer::restart)
         .beforeStarting(Commands.runOnce(drive::resetEncoders))

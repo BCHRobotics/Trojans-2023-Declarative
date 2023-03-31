@@ -1,5 +1,5 @@
 // Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
+// Open Source Software; you can modify and/or5 share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
 package frc.robot;
@@ -29,13 +29,13 @@ public final class Constants {
     public static final double kS = 0.2397;
     public static final double kV = 1.6742;
     public static final double kA = 0.8638;
-    public static final double kP = 0.0002827;
+    public static final double kP = 0.0003;
 
     public static final double TRACK_WIDTH = 0.63; // m
     public static final DifferentialDriveKinematics DRIVE_KINEMATICS = new DifferentialDriveKinematics(TRACK_WIDTH);
 
     public static final double MAX_SPEED = 3; // m/s
-    public static final double MAX_ACCEL = 1; // m/s/s
+    public static final double MAX_ACCEL = 1.5; // m/s/s
 
     public static final double RAMSETE_B = 2; // Default: 2
     public static final double RAMSETE_ZETA = 0.7; // Default: 0.7
@@ -129,7 +129,7 @@ public final class Constants {
 
     // Mechanism PID Constants TODO: Re-tune after modified wrist installation
     public static final SparkMaxConstants SHOULDER_CONTROL_CONSTANTS = new SparkMaxConstants(
-        0.00014028, 0, 0.00051398, 0, 2e-6, -0.15, 1,
+        0.00014028, 0, 0.00051398, 0, 2e-6, -0.3, 1,
         0, 0, 5700, 3500, 0.2);
 
     public static final SparkMaxConstants WRIST_CONTROL_CONSTANTS = new SparkMaxConstants(
@@ -137,13 +137,14 @@ public final class Constants {
         0, 0, 5700, 5700, 0.05);
 
     // Arm preset profiles TODO: Verify Presets with Drive Team
-    public static final ArmPresets DEFAULT = new ArmPresets(0, -90, "Default");
-    public static final ArmPresets GROUND = new ArmPresets(5, 0, "Ground");
-    public static final ArmPresets MID = new ArmPresets(26, -55, "Mid");
-    public static final ArmPresets STATION = new ArmPresets(47, 0, "Station");
-    public static final ArmPresets TOP = new ArmPresets(44, -40, "Top");
+    public static final ArmPresets HOME = new ArmPresets(0, -90, "HOME");
+    public static final ArmPresets STOWED = new ArmPresets(0, -55, "STOWED");
+    public static final ArmPresets LOW = new ArmPresets(5, 0, "LOW");
+    public static final ArmPresets MID = new ArmPresets(25, -55, "MID");
+    public static final ArmPresets HIGH = new ArmPresets(43, -45, "HIGH");
+    public static final ArmPresets STATION = new ArmPresets(45, 0, "STATION");
 
-    public static final ArmPresets[] PRESETS = { DEFAULT, GROUND, MID, STATION, TOP };
+    public static final ArmPresets[] PRESETS = { HOME, STOWED, LOW, MID, HIGH, STATION };
   }
 
   public static final class PERIPHERALS {

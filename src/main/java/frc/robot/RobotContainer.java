@@ -7,6 +7,7 @@ package frc.robot;
 // Import required modules
 import frc.robot.Commands.Autos;
 import frc.robot.Constants.MECHANISM;
+import frc.robot.Constants.PATHING;
 import frc.robot.Constants.PERIPHERALS;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Mechanism;
@@ -47,8 +48,8 @@ public class RobotContainer {
   private final Command scoreGamePiece = Autos.automatedScoringCommand(drivetrain, mechanism);
 
   // The Autonomous trajectory path to follow
-  private final PathPlannerTrajectory followMap = PathPlanner.loadPath("DoubleScore_V.1.0",
-      new PathConstraints(3, 1.5), true);
+  private final PathPlannerTrajectory followMap = PathPlanner.loadPath("DoubleScore_V.1.9",
+      new PathConstraints(PATHING.MAX_SPEED, PATHING.MAX_ACCEL), true);
 
   // This is just an example event map. It would be better to have a constant,
   // global event map
@@ -75,19 +76,19 @@ public class RobotContainer {
   public RobotContainer() {
 
     // Initialize autonomous eventmap options
-    eventMap.put("DropPreload", this.mechanism.setConeLED(true));
-    eventMap.put("DropWrist", this.mechanism.setCubeLED(true));
-    eventMap.put("GrabGamePiece", this.mechanism.setConeLED(false));
-    eventMap.put("StowWrist", this.mechanism.setCubeLED(false));
-    eventMap.put("ArmMidPreset", this.mechanism.setCubeLED(true));
-    eventMap.put("ReleaseGamePiece", this.mechanism.setConeLED(true));
+    // eventMap.put("DropPreload", this.mechanism.setConeLED(true));
+    // eventMap.put("DropWrist", this.mechanism.setCubeLED(true));
+    // eventMap.put("GrabGamePiece", this.mechanism.setConeLED(false));
+    // eventMap.put("StowWrist", this.mechanism.setCubeLED(false));
+    // eventMap.put("ArmMidPreset", this.mechanism.setCubeLED(true));
+    // eventMap.put("ReleaseGamePiece", this.mechanism.setConeLED(true));
 
-    // eventMap.put("DropPreload", this.mechanism.releaseGamePiece());
-    // eventMap.put("DropWrist", this.mechanism.setArmPreset(MECHANISM.GROUND));
-    // eventMap.put("GrabGamePiece", this.mechanism.grabCube());
-    // eventMap.put("StowWrist", this.mechanism.setArmPreset(MECHANISM.DEFAULT));
-    // eventMap.put("ArmMidPreset", this.mechanism.setArmPreset(MECHANISM.MID));
-    // eventMap.put("ReleaseGamePiece", this.mechanism.releaseGamePiece());
+    eventMap.put("DropPreload", this.mechanism.releaseGamePiece());
+    eventMap.put("DropWrist", this.mechanism.setArmPreset(MECHANISM.LOW));
+    eventMap.put("GrabGamePiece", this.mechanism.grabCone());
+    eventMap.put("StowWrist", this.mechanism.setArmPreset(MECHANISM.HOME));
+    eventMap.put("ArmMidPreset", this.mechanism.setArmPreset(MECHANISM.MID));
+    eventMap.put("ReleaseGamePiece", this.mechanism.launchGamePiece());
 
     // Set default commands
 
@@ -141,11 +142,13 @@ public class RobotContainer {
     this.driverController.povRight().onTrue(this.scoreGamePiece);
 
     // Operator arm preset controls
-    this.operatorController.povUp().onTrue(this.mechanism.setArmPreset(MECHANISM.TOP));
+
+    this.operatorController.povLeft().onTrue(this.mechanism.setArmPreset(MECHANISM.HOME));
+    this.operatorController.leftStick().onTrue(this.mechanism.setArmPreset(MECHANISM.STOWED));
+    this.operatorController.povDown().onTrue(this.mechanism.setArmPreset(MECHANISM.LOW));
+    this.operatorController.povRight().onTrue(this.mechanism.setArmPreset(MECHANISM.MID));
+    this.operatorController.povUp().onTrue(this.mechanism.setArmPreset(MECHANISM.HIGH));
     this.operatorController.rightStick().onTrue(this.mechanism.setArmPreset(MECHANISM.STATION));
-    this.operatorController.povLeft().onTrue(this.mechanism.setArmPreset(MECHANISM.MID));
-    this.operatorController.povDown().onTrue(this.mechanism.setArmPreset(MECHANISM.GROUND));
-    this.operatorController.povRight().onTrue(this.mechanism.setArmPreset(MECHANISM.DEFAULT));
 
     // Operator intake claw controls
     this.operatorController.x().onTrue(this.mechanism.grabCube());
@@ -163,13 +166,14 @@ public class RobotContainer {
    */
   public void EMERGENCY_STOP() {
     this.drivetrain.killSwitch();
+    this.mechanism.shutDown();
   }
 
   /**
    * Resets arm to default position
    */
   public Command ARM_RESET() {
-    return this.mechanism.setArmPreset(MECHANISM.DEFAULT);
+    return this.mechanism.setArmPreset(MECHANISM.HOME);
   }
 
   /**
