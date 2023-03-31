@@ -114,7 +114,7 @@ public final class Constants {
     public static final double SHOULDER_DEFAULT_OFFSET = 17;
     public static final double WRIST_DEFAULT_OFFSET = SHOULDER_DEFAULT_OFFSET;
     public static final double WRIST_PARALLEL_OFFSET = 90;
-    public static final float SHOULDER_LIMIT = 130 + (float) MECHANISM.SHOULDER_DEFAULT_OFFSET;
+    public static final float SHOULDER_LIMIT = 105;
     public static final float WRIST_LIMIT = 200 + (float) MECHANISM.WRIST_DEFAULT_OFFSET;
     public static final double SHOUDLER_MAX_EXTENSION_LIMIT = 55;
     public static final double SHOULDER_TOLERANCE = 1;
@@ -129,8 +129,8 @@ public final class Constants {
 
     // Mechanism PID Constants TODO: Re-tune after modified wrist installation
     public static final SparkMaxConstants SHOULDER_CONTROL_CONSTANTS = new SparkMaxConstants(
-        0.00014028, 0, 0.00051398, 0, 2e-6, -0.3, 1,
-        0, 0, 5700, 3500, 0.2);
+        0.00012028, 0, 0.00051398, 0, 2e-6, -0.3, 1,
+        0, 0, 5700, 3000, 0.2);
 
     public static final SparkMaxConstants WRIST_CONTROL_CONSTANTS = new SparkMaxConstants(
         2.1028E-05, 0, 5.1398E-05, 0, 0.00004, -1, 1,
@@ -142,7 +142,7 @@ public final class Constants {
     public static final ArmPresets LOW = new ArmPresets(5, 0, "LOW");
     public static final ArmPresets MID = new ArmPresets(25, -55, "MID");
     public static final ArmPresets HIGH = new ArmPresets(43, -45, "HIGH");
-    public static final ArmPresets STATION = new ArmPresets(45, 0, "STATION");
+    public static final ArmPresets STATION = new ArmPresets(44, 0, "STATION");
 
     public static final ArmPresets[] PRESETS = { HOME, STOWED, LOW, MID, HIGH, STATION };
   }

@@ -143,8 +143,8 @@ public class RobotContainer {
 
     // Operator arm preset controls
 
-    this.operatorController.povLeft().onTrue(this.mechanism.setArmPreset(MECHANISM.HOME));
-    this.operatorController.leftStick().onTrue(this.mechanism.setArmPreset(MECHANISM.STOWED));
+    this.operatorController.leftStick().onTrue(this.mechanism.setArmPreset(MECHANISM.HOME));
+    this.operatorController.povLeft().onTrue(this.mechanism.setArmPreset(MECHANISM.STOWED));
     this.operatorController.povDown().onTrue(this.mechanism.setArmPreset(MECHANISM.LOW));
     this.operatorController.povRight().onTrue(this.mechanism.setArmPreset(MECHANISM.MID));
     this.operatorController.povUp().onTrue(this.mechanism.setArmPreset(MECHANISM.HIGH));
@@ -155,6 +155,7 @@ public class RobotContainer {
     this.operatorController.y().onTrue(this.mechanism.grabCone());
     this.operatorController.a().onTrue(this.mechanism.releaseGamePiece());
     this.operatorController.b().onTrue(this.mechanism.disableClaw());
+    this.operatorController.rightTrigger(0.1).onTrue(this.mechanism.launchGamePiece());
 
     // Operator game piece signals
     this.operatorController.leftBumper().whileTrue(this.mechanism.blinkCubeLED());

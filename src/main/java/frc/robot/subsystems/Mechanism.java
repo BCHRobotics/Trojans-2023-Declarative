@@ -156,7 +156,7 @@ public class Mechanism extends SubsystemBase {
    * @return "Grab Game-Piece" Command
    */
   public Command grabCube() {
-    return startEnd(() -> this.setClawSpeed(0.3), () -> this.setClawSpeed(0.02))
+    return startEnd(() -> this.setClawSpeed(0.6), () -> this.setClawSpeed(0.02))
         .until(() -> this.gamePieceDetected(MISC.CUBE_DETECTION_CURRENT))
         .andThen(
             () -> SmartDashboard.putBoolean("Game Piece", true));
