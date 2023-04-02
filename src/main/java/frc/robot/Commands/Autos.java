@@ -28,8 +28,16 @@ public final class Autos {
    * A simple auto routine that drives backward a specified distance, and then
    * stops.
    */
-  public static Command driveBack(Drivetrain drive) {
-    return drive.positionDriveCommand(-160, -160).beforeStarting(Commands.runOnce(drive::resetEncoders));
+  public static Command driveBack(Drivetrain drive, Mechanism mech) {
+    return Commands.sequence(
+        mech.setArmPreset(MECHANISM.STOWED).until(() -> timer.advanceIfElapsed(1)),
+        mech.releaseGamePiece().until(() -> timer.advanceIfElapsed(1)),
+
+        // Drive onto the charging station
+        drive.positionDriveCommand(-160, -160))
+        .beforeStarting(timer::restart)
+        .beforeStarting(Commands.runOnce(drive::resetEncoders))
+        .andThen(timer::stop);
   }
 
   /**
@@ -86,25 +94,58 @@ public final class Autos {
 
         drive.positionDriveCommand(0, 0).alongWith(mech.setArmPreset(MECHANISM.HOME))
             .until(() -> timer.advanceIfElapsed(4)))
+        .beforeStarting(timer::restart);
+  }
+
+  /**
+   * A highly sophisticated auto routine that places a gamepiece in the hybrid
+   * zone,
+   * drives back, and then drives to the charging station and balances.
+   */
+  public static Command scoreAndBalance(Drivetrain drive, Mechanism mech) {
+    return Commands.sequence(
+        mech.setArmPreset(MECHANISM.STOWED).until(() -> timer.advanceIfElapsed(1)),
+        mech.releaseGamePiece().until(() -> timer.advanceIfElapsed(1)),
+
+        // Drive onto the charging station
+        drive.positionDriveCommand(-92, -92).until(() -> timer.advanceIfElapsed(6)),
+
+        // Balance the robot
+        drive.balance())
         .beforeStarting(timer::restart)
         .beforeStarting(Commands.runOnce(drive::resetEncoders))
         .andThen(timer::stop);
   }
 
   /**
-   * A highly sophisticated auto routine that places a cone on the middle peg,
-   * drives back, turns around, grabs another cone, and then drives
-   * to the charging station and balances.
+   * A highly sophisticated auto routine that places a gamepiece in the hybrid
+   * zone,
+   * drives back, and then drives to the charging station and balances.
    */
-  public static Command scoreAndBalance(Drivetrain drive, Mechanism mech) {
+  public static Command mobilityAndBalance(Drivetrain drive, Mechanism mech) {
     return Commands.sequence(
-        mech.releaseGamePiece(),
+        mech.setArmPreset(MECHANISM.STOWED).until(() -> timer.advanceIfElapsed(1)),
+        mech.releaseGamePiece().until(() -> timer.advanceIfElapsed(1)),
 
         // Drive onto the charging station
-        drive.positionDriveCommand(0, 0),
+        drive.positionDriveCommand(-170, -170)
+            .alongWith(mech.setArmPreset(MECHANISM.HOME))
+            .until(() -> timer.advanceIfElapsed(7)),
+
+        // Drive to gyro heading
+        drive.turnToGyro(180).until(() -> timer.advanceIfElapsed(2)),
+
+        // Drive reset encoders
+        Commands.runOnce(drive::resetEncoders),
+
+        // Drive onto the charging station
+        drive.positionDriveCommand(90, 90).until(() -> timer.advanceIfElapsed(2)),
 
         // Balance the robot
-        drive.balance()).beforeStarting(Commands.runOnce(drive::resetEncoders));
+        drive.balance())
+        .beforeStarting(timer::restart)
+        .beforeStarting(Commands.runOnce(drive::resetEncoders))
+        .andThen(timer::stop);
   }
 
   /**

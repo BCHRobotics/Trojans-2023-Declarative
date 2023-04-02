@@ -57,11 +57,12 @@ public class RobotContainer {
   private final HashMap<String, Command> eventMap = new HashMap<>();
 
   // The autonomous routines
-  private final Command driveAuto = Autos.driveBack(drivetrain);
+  private final Command driveAuto = Autos.driveBack(drivetrain, mechanism);
   private final Command turnAuto = Autos.turn(drivetrain);
   private final Command balanceAuto = Autos.driveBackAndBalance(drivetrain);
   private final Command scoreAuto = Autos.scoreTwoPieces(drivetrain, mechanism);
   private final Command scoreAndBalance = Autos.scoreAndBalance(drivetrain, mechanism);
+  private final Command mobileBalance = Autos.mobilityAndBalance(drivetrain, mechanism);
   private final Command plannerAuto = Autos.followTrajectoryCommand(drivetrain,
       this.followMap, true);
 
@@ -102,12 +103,13 @@ public class RobotContainer {
 
     // Add commands to the autonomous command chooser
     this.autoChooser.setDefaultOption("Drive Back", driveAuto);
-    this.autoChooser.addOption("Turn", turnAuto);
-    this.autoChooser.addOption("Balance", balanceAuto);
+    // this.autoChooser.addOption("Turn", turnAuto);
+    // this.autoChooser.addOption("Balance", balanceAuto);
     this.autoChooser.addOption("Score", scoreAuto);
     this.autoChooser.addOption("Score and Balance", scoreAndBalance);
-    this.autoChooser.addOption("Planner", plannerAuto);
-    this.autoChooser.addOption("Advanced", advancedAuto);
+    this.autoChooser.addOption("Mobile Balance", mobileBalance);
+    // this.autoChooser.addOption("Planner", plannerAuto);
+    // this.autoChooser.addOption("Advanced", advancedAuto);
 
     SmartDashboard.putData("Autonomous Route", this.autoChooser);
   }

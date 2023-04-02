@@ -72,9 +72,9 @@ public final class Constants {
 
     // Drive PID Constants TODO: Re-tune Drivetrain PID
     public static final SparkMaxConstants LEFT_DRIVE_CONSTANTS = new SparkMaxConstants(
-        0.00017, 0, 0.0025, 0, 0.00005, -1, 1, 0, 0, 6000, 1000, 0.05);
+        0.00017, 0, 0.0025, 0, 0.00005, -1, 1, 0, 0, 4500, 1000, 0.05);
     public static final SparkMaxConstants RIGHT_DRIVE_CONSTANTS = new SparkMaxConstants(
-        0.00017, 0, 0.0025, 0, 0.00005, -1, 1, 0, 0, 6000, 1000, 0.05);
+        0.00017, 0, 0.0025, 0, 0.00005, -1, 1, 0, 0, 4500, 1000, 0.05);
 
     // Gyro constants
     public static final SerialPort.Port GYRO_PORT = SerialPort.Port.kMXP;
@@ -83,7 +83,7 @@ public final class Constants {
 
     // Gyro PID Constants TODO: Re-tune gyro
     public static final class GYRO_CONSTANTS {
-      public static final double kP = 0.007;
+      public static final double kP = 0.006;
       public static final double kI = 0.001;
       public static final double kD = 0;
     }
@@ -140,9 +140,9 @@ public final class Constants {
     public static final ArmPresets HOME = new ArmPresets(0, -90, "HOME");
     public static final ArmPresets STOWED = new ArmPresets(0, -55, "STOWED");
     public static final ArmPresets LOW = new ArmPresets(5, 0, "LOW");
-    public static final ArmPresets MID = new ArmPresets(25, -55, "MID");
+    public static final ArmPresets MID = new ArmPresets(24, -55, "MID");
     public static final ArmPresets HIGH = new ArmPresets(43, -45, "HIGH");
-    public static final ArmPresets STATION = new ArmPresets(44, 0, "STATION");
+    public static final ArmPresets STATION = new ArmPresets(42, 0, "STATION");
 
     public static final ArmPresets[] PRESETS = { HOME, STOWED, LOW, MID, HIGH, STATION };
   }
@@ -184,7 +184,7 @@ public final class Constants {
     public static final int CUBE_LED_PORT = 1;
 
     public static final double CUBE_DETECTION_CURRENT = 20;
-    public static final double CONE_DETECTION_CURRENT = 28;
+    public static final double CONE_DETECTION_CURRENT = 26;
 
     public static final double BLINK_INTERVAL = 0.5; // seconds
 

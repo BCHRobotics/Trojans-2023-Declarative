@@ -148,6 +148,21 @@ public class Drivetrain extends SubsystemBase {
   }
 
   /**
+   * Sets drivetrain position in inches
+   */
+  public Command turnToGyro(double angle) {
+    return startEnd(() -> {
+      this.setPosition(-((this.gyro.getYaw() - angle) * CHASSIS.TURNING_CONVERSION),
+          ((this.gyro.getYaw() - angle) * CHASSIS.TURNING_CONVERSION));
+    },
+        this::emergencyStop)
+        .beforeStarting(this::enableBrakeMode)
+        .beforeStarting(this::disableRampRate)
+        .beforeStarting(this::resetEncoders)
+        .withName("turnToGyro");
+  }
+
+  /**
    * Returns whether or not the robot has reached the desired position
    */
   private boolean reachedPosition() {
@@ -167,7 +182,7 @@ public class Drivetrain extends SubsystemBase {
         // Close the loop on the turn rate
         this.gyro::getPitch,
         // Setpoint is 0
-        0,
+        1.0,
         // Pipe the output to the turning controls
         (output) -> this.driveStraight(output),
         // Require the robot drive
