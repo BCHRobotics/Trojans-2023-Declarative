@@ -31,13 +31,15 @@ public final class Autos {
   public static Command driveBack(Drivetrain drive, Mechanism mech) {
     return Commands.sequence(
         mech.setArmPreset(MECHANISM.STOWED).until(() -> timer.advanceIfElapsed(1)),
-        mech.releaseGamePiece().until(() -> timer.advanceIfElapsed(1)),
+        mech.releaseGamePiece()
+            .until(() -> timer.advanceIfElapsed(1)),
 
         // Drive onto the charging station
         drive.positionDriveCommand(-160, -160))
-        .beforeStarting(timer::restart)
+        .alongWith(mech.setArmPreset(MECHANISM.HOME))
+        .beforeStarting(Commands.runOnce(timer::restart))
         .beforeStarting(Commands.runOnce(drive::resetEncoders))
-        .andThen(timer::stop);
+        .andThen(Commands.runOnce(timer::stop));
   }
 
   /**
@@ -50,13 +52,17 @@ public final class Autos {
   /**
    * A complex auto routine that drives backward, then balances
    */
-  public static Command driveBackAndBalance(Drivetrain drive) {
+  public static Command balance(Drivetrain drive) {
     return Commands.sequence(
         // Drive onto the charging station
-        drive.positionDriveCommand(-102, -102).beforeStarting(Commands.runOnce(drive::resetEncoders)),
+        drive.positionDriveCommand(94, 94)
+            .until(() -> timer.advanceIfElapsed(6)),
 
         // Balance the robot
-        drive.balance());
+        drive.balance())
+        .beforeStarting(Commands.runOnce(timer::restart))
+        .beforeStarting(Commands.runOnce(drive::resetEncoders))
+        .andThen(Commands.runOnce(timer::stop));
   }
 
   /**
@@ -108,13 +114,15 @@ public final class Autos {
         mech.releaseGamePiece().until(() -> timer.advanceIfElapsed(1)),
 
         // Drive onto the charging station
-        drive.positionDriveCommand(-92, -92).until(() -> timer.advanceIfElapsed(6)),
+        drive.positionDriveCommand(-94, -94)
+            .alongWith(mech.setArmPreset(MECHANISM.HOME))
+            .until(() -> timer.advanceIfElapsed(6)),
 
         // Balance the robot
         drive.balance())
-        .beforeStarting(timer::restart)
+        .beforeStarting(Commands.runOnce(timer::restart))
         .beforeStarting(Commands.runOnce(drive::resetEncoders))
-        .andThen(timer::stop);
+        .andThen(Commands.runOnce(timer::stop));
   }
 
   /**
@@ -133,7 +141,7 @@ public final class Autos {
             .until(() -> timer.advanceIfElapsed(7)),
 
         // Drive to gyro heading
-        drive.turnToGyro(180).until(() -> timer.advanceIfElapsed(2)),
+        drive.turnToGyro(0).until(() -> timer.advanceIfElapsed(2)),
 
         // Drive reset encoders
         Commands.runOnce(drive::resetEncoders),
@@ -143,9 +151,10 @@ public final class Autos {
 
         // Balance the robot
         drive.balance())
-        .beforeStarting(timer::restart)
+        .beforeStarting(Commands.runOnce(timer::restart))
         .beforeStarting(Commands.runOnce(drive::resetEncoders))
-        .andThen(timer::stop);
+        .beforeStarting(Commands.runOnce(drive::resetGyro))
+        .andThen(Commands.runOnce(timer::stop));
   }
 
   /**

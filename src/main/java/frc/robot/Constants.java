@@ -134,15 +134,15 @@ public final class Constants {
 
     public static final SparkMaxConstants WRIST_CONTROL_CONSTANTS = new SparkMaxConstants(
         2.1028E-05, 0, 5.1398E-05, 0, 0.00004, -1, 1,
-        0, 0, 5700, 5700, 0.05);
+        0, 0, 5700, 5700, 0.1);
 
     // Arm preset profiles TODO: Verify Presets with Drive Team
     public static final ArmPresets HOME = new ArmPresets(0, -90, "HOME");
     public static final ArmPresets STOWED = new ArmPresets(0, -55, "STOWED");
-    public static final ArmPresets LOW = new ArmPresets(5, 0, "LOW");
+    public static final ArmPresets LOW = new ArmPresets(5, -1, "LOW");
     public static final ArmPresets MID = new ArmPresets(24, -55, "MID");
     public static final ArmPresets HIGH = new ArmPresets(43, -45, "HIGH");
-    public static final ArmPresets STATION = new ArmPresets(42, 0, "STATION");
+    public static final ArmPresets STATION = new ArmPresets(43, -1, "STATION");
 
     public static final ArmPresets[] PRESETS = { HOME, STOWED, LOW, MID, HIGH, STATION };
   }
@@ -184,19 +184,9 @@ public final class Constants {
     public static final int CUBE_LED_PORT = 1;
 
     public static final double CUBE_DETECTION_CURRENT = 20;
-    public static final double CONE_DETECTION_CURRENT = 26;
+    public static final double CONE_DETECTION_CURRENT = 27;
 
-    public static final double BLINK_INTERVAL = 0.5; // seconds
-
-    public static enum LED_STATE {
-      CONE,
-      CUBE,
-      BOTH,
-      CONE_BLINK,
-      CUBE_BLINK,
-      BOTH_BLINK,
-      OFF
-    }
+    public static final double BLINK_INTERVAL = 0.3; // seconds
 
     public static final double ENSURE_RANGE(double value, double min, double max) {
       return Math.min(Math.max(value, min), max);

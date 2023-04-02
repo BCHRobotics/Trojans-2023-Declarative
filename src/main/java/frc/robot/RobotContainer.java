@@ -59,7 +59,7 @@ public class RobotContainer {
   // The autonomous routines
   private final Command driveAuto = Autos.driveBack(drivetrain, mechanism);
   private final Command turnAuto = Autos.turn(drivetrain);
-  private final Command balanceAuto = Autos.driveBackAndBalance(drivetrain);
+  private final Command balanceAuto = Autos.balance(drivetrain);
   private final Command scoreAuto = Autos.scoreTwoPieces(drivetrain, mechanism);
   private final Command scoreAndBalance = Autos.scoreAndBalance(drivetrain, mechanism);
   private final Command mobileBalance = Autos.mobilityAndBalance(drivetrain, mechanism);
@@ -104,8 +104,8 @@ public class RobotContainer {
     // Add commands to the autonomous command chooser
     this.autoChooser.setDefaultOption("Drive Back", driveAuto);
     // this.autoChooser.addOption("Turn", turnAuto);
-    // this.autoChooser.addOption("Balance", balanceAuto);
-    this.autoChooser.addOption("Score", scoreAuto);
+    this.autoChooser.addOption("Balance", balanceAuto);
+    // this.autoChooser.addOption("Score", scoreAuto);
     this.autoChooser.addOption("Score and Balance", scoreAndBalance);
     this.autoChooser.addOption("Mobile Balance", mobileBalance);
     // this.autoChooser.addOption("Planner", plannerAuto);
@@ -160,8 +160,10 @@ public class RobotContainer {
     this.operatorController.rightTrigger(0.1).onTrue(this.mechanism.launchGamePiece());
 
     // Operator game piece signals
-    this.operatorController.leftBumper().whileTrue(this.mechanism.blinkCubeLED());
-    this.operatorController.rightBumper().whileTrue(this.mechanism.blinkConeLED());
+    this.operatorController.leftBumper().whileTrue(this.mechanism.blinkCubeLED())
+        .onFalse(this.mechanism.setCubeLED(false));
+    this.operatorController.rightBumper().whileTrue(this.mechanism.blinkConeLED())
+        .onFalse(this.mechanism.setConeLED(false));
   }
 
   /**

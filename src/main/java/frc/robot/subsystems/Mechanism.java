@@ -241,8 +241,7 @@ public class Mechanism extends SubsystemBase {
         new WaitCommand(MISC.BLINK_INTERVAL),
         this.setConeLED(false),
         new WaitCommand(MISC.BLINK_INTERVAL))
-        .repeatedly()
-        .andThen(this.setConeLED(false));
+        .repeatedly();
   }
 
   /**
@@ -256,8 +255,7 @@ public class Mechanism extends SubsystemBase {
         new WaitCommand(MISC.BLINK_INTERVAL),
         this.setCubeLED(false),
         new WaitCommand(MISC.BLINK_INTERVAL))
-        .repeatedly()
-        .andThen(this.setCubeLED(false));
+        .repeatedly();
   }
 
   /**

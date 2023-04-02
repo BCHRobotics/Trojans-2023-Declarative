@@ -428,6 +428,13 @@ public class Drivetrain extends SubsystemBase {
   }
 
   /**
+   * Resest drivetrain gyro position
+   */
+  public void resetGyro() {
+    this.gyro.reset();
+  }
+
+  /**
    * Updates motor controllers after settings change
    */
   private void pushControllerUpdate() {
