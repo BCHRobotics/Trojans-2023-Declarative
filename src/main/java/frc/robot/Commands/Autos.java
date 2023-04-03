@@ -30,16 +30,16 @@ public final class Autos {
    */
   public static Command driveBack(Drivetrain drive, Mechanism mech) {
     return Commands.sequence(
-        mech.setArmPreset(MECHANISM.STOWED).until(() -> timer.advanceIfElapsed(1)),
-        mech.releaseGamePiece()
-            .until(() -> timer.advanceIfElapsed(1)),
+        // mech.setArmPreset(MECHANISM.STOWED).until(() -> timer.advanceIfElapsed(1)),
+        mech.setArmPreset(MECHANISM.STOWED).withTimeout(1),
+
+        mech.launchGamePiece()
+            // .until(() -> timer.advanceIfElapsed(1)),
+            .withTimeout(1),
 
         // Drive onto the charging station
-        drive.positionDriveCommand(-160, -160))
-        .alongWith(mech.setArmPreset(MECHANISM.HOME))
-        .beforeStarting(Commands.runOnce(timer::restart))
-        .beforeStarting(Commands.runOnce(drive::resetEncoders))
-        .andThen(Commands.runOnce(timer::stop));
+        drive.positionDriveCommand(-160, -160)
+            .beforeStarting(Commands.runOnce(drive::resetEncoders)));
   }
 
   /**
@@ -114,7 +114,7 @@ public final class Autos {
         mech.releaseGamePiece().until(() -> timer.advanceIfElapsed(1)),
 
         // Drive onto the charging station
-        drive.positionDriveCommand(-94, -94)
+        drive.positionDriveCommand(-95, -95)
             .alongWith(mech.setArmPreset(MECHANISM.HOME))
             .until(() -> timer.advanceIfElapsed(6)),
 
