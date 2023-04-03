@@ -7,7 +7,6 @@ package frc.robot;
 // Import required modules
 import frc.robot.Commands.Autos;
 import frc.robot.Constants.MECHANISM;
-import frc.robot.Constants.PATHING;
 import frc.robot.Constants.PERIPHERALS;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Mechanism;
@@ -19,13 +18,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-
-import java.util.HashMap;
-
-import com.pathplanner.lib.PathConstraints;
-import com.pathplanner.lib.PathPlanner;
-import com.pathplanner.lib.PathPlannerTrajectory;
-import com.pathplanner.lib.commands.FollowPathWithEvents;
 
 /**
  * This class is where the bulk of the robot should be declared. Since
@@ -47,50 +39,17 @@ public class RobotContainer {
 
   private final Command scoreGamePiece = Autos.automatedScoringCommand(drivetrain, mechanism);
 
-  // The Autonomous trajectory path to follow
-  private final PathPlannerTrajectory followMap = PathPlanner.loadPath("DoubleScore_V.1.9",
-      new PathConstraints(PATHING.MAX_SPEED, PATHING.MAX_ACCEL), true);
-
-  // This is just an example event map. It would be better to have a constant,
-  // global event map
-  // in your code that will be used by all path following commands.
-  private final HashMap<String, Command> eventMap = new HashMap<>();
-
   // The autonomous routines
   private final Command driveAuto = Autos.driveBack(drivetrain, mechanism);
-  private final Command turnAuto = Autos.turn(drivetrain);
   private final Command balanceAuto = Autos.balance(drivetrain);
   private final Command scoreAuto = Autos.scoreTwoPieces(drivetrain, mechanism);
   private final Command scoreAndBalance = Autos.scoreAndBalance(drivetrain, mechanism);
   private final Command mobileBalance = Autos.mobilityAndBalance(drivetrain, mechanism);
-  private final Command plannerAuto = Autos.followTrajectoryCommand(drivetrain,
-      this.followMap, true);
-
-  private final FollowPathWithEvents advancedAuto = new FollowPathWithEvents(
-      this.plannerAuto,
-      this.followMap.getMarkers(),
-      this.eventMap);
 
   // A chooser for autonomous commands
   SendableChooser<Command> autoChooser = new SendableChooser<>();
 
   public RobotContainer() {
-
-    // Initialize autonomous eventmap options
-    // eventMap.put("DropPreload", this.mechanism.setConeLED(true));
-    // eventMap.put("DropWrist", this.mechanism.setCubeLED(true));
-    // eventMap.put("GrabGamePiece", this.mechanism.setConeLED(false));
-    // eventMap.put("StowWrist", this.mechanism.setCubeLED(false));
-    // eventMap.put("ArmMidPreset", this.mechanism.setCubeLED(true));
-    // eventMap.put("ReleaseGamePiece", this.mechanism.setConeLED(true));
-
-    eventMap.put("DropPreload", this.mechanism.releaseGamePiece());
-    eventMap.put("DropWrist", this.mechanism.setArmPreset(MECHANISM.LOW));
-    eventMap.put("GrabGamePiece", this.mechanism.grabCone());
-    eventMap.put("StowWrist", this.mechanism.setArmPreset(MECHANISM.HOME));
-    eventMap.put("ArmMidPreset", this.mechanism.setArmPreset(MECHANISM.MID));
-    eventMap.put("ReleaseGamePiece", this.mechanism.launchGamePiece());
-
     // Set default commands
 
     // Control the drive with split-stick arcade controls
@@ -103,13 +62,10 @@ public class RobotContainer {
 
     // Add commands to the autonomous command chooser
     this.autoChooser.setDefaultOption("Drive Back", driveAuto);
-    // this.autoChooser.addOption("Turn", turnAuto);
     this.autoChooser.addOption("Balance", balanceAuto);
-    // this.autoChooser.addOption("Score", scoreAuto);
+    this.autoChooser.addOption("Score", scoreAuto);
     this.autoChooser.addOption("Score and Balance", scoreAndBalance);
     this.autoChooser.addOption("Mobile Balance", mobileBalance);
-    // this.autoChooser.addOption("Planner", plannerAuto);
-    // this.autoChooser.addOption("Advanced", advancedAuto);
 
     SmartDashboard.putData("Autonomous Route", this.autoChooser);
   }

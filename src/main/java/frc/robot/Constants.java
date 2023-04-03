@@ -155,7 +155,7 @@ public final class Constants {
 
   public static final class VISION {
     public enum TARGET_TYPE {
-      APRILTAG, REFLECTIVE_TAPE
+      APRILTAG, REFLECTIVE_TAPE, CONE, CUBE
     }
 
     public static final int CUBE_PIPELINE = 0;

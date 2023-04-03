@@ -3,8 +3,6 @@ package frc.robot.util.devices;
 import frc.robot.Constants.MISC;
 import frc.robot.Constants.VISION;
 import frc.robot.Constants.VISION.TARGET_TYPE;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
@@ -74,24 +72,6 @@ public class Limelight {
 
     public double getTargetArea() {
         return this.networkTable.getEntry("ta").getDouble(0);
-    }
-
-    /**
-     * Get bot pose (position and rotation) in 3D field space
-     * 
-     * @return
-     */
-    public double[] getBotPose() {
-        return this.networkTable.getEntry("botpose").getDoubleArray(new double[6]);
-    }
-
-    /**
-     * Get limelight april tag detected position
-     * 
-     * @return
-     */
-    public Pose2d getPose2d() {
-        return new Pose2d(this.getBotPose()[0], this.getBotPose()[1], new Rotation2d(this.getBotPose()[3]));
     }
 
     /**

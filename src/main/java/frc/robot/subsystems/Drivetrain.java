@@ -5,7 +5,6 @@
 package frc.robot.subsystems;
 
 import frc.robot.Constants.CHASSIS;
-import frc.robot.Constants.PATHING;
 import frc.robot.Constants.PERIPHERALS;
 import frc.robot.Constants.VISION;
 import frc.robot.Constants.VISION.TARGET_TYPE;
@@ -13,11 +12,6 @@ import frc.robot.util.control.SparkMaxPID;
 import frc.robot.util.devices.Gyro;
 import frc.robot.util.devices.Limelight;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.estimator.DifferentialDrivePoseEstimator;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -47,7 +41,6 @@ public class Drivetrain extends SubsystemBase {
   private final SparkMaxPID rightMotorController;
 
   private final DifferentialDrive drive;
-  private final DifferentialDrivePoseEstimator driveOdometry;
 
   // Objects for gyroscope odometry and balancing
   private final Gyro gyro;
@@ -105,10 +98,6 @@ public class Drivetrain extends SubsystemBase {
     this.limelight.setDesiredTarget(TARGET_TYPE.APRILTAG);
 
     this.drive = new DifferentialDrive(this.frontLeftMotor, this.frontRightMotor);
-
-    this.driveOdometry = new DifferentialDrivePoseEstimator(PATHING.DRIVE_KINEMATICS, this.gyro.getRotation2d(),
-        Units.inchesToMeters(this.getLeftPosition()),
-        Units.inchesToMeters(this.getRightPosition()), this.limelight.getPose2d());
 
   }
 
@@ -462,37 +451,6 @@ public class Drivetrain extends SubsystemBase {
   // Path planning methods
 
   /**
-   * Returns the currently-estimated pose of the robot.
-   *
-   * @return The pose.
-   */
-  public Pose2d getPose() {
-    return this.driveOdometry.getEstimatedPosition();
-  }
-
-  /**
-   * Returns the current wheel speeds of the robot.
-   *
-   * @return The current wheel speeds.
-   */
-  public DifferentialDriveWheelSpeeds getWheelSpeeds() {
-    return new DifferentialDriveWheelSpeeds(Units.inchesToMeters(this.getLeftVelocity()),
-        Units.inchesToMeters(this.getRightVelocity()));
-  }
-
-  /**
-   * Resets the odometry to the specified pose.
-   *
-   * @param pose The pose to which to set the odometry.
-   */
-  public void resetOdometry(Pose2d pose) {
-    this.resetEncoders();
-    this.driveOdometry.resetPosition(
-        this.gyro.getRotation2d(), Units.inchesToMeters(this.getLeftPosition()),
-        Units.inchesToMeters(this.getRightPosition()), pose);
-  }
-
-  /**
    * Controls the left and right sides of the drive directly with voltages.
    *
    * @param leftVolts  the commanded left output
@@ -530,16 +488,6 @@ public class Drivetrain extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    this.driveOdometry.update(this.gyro.getRotation2d(),
-        Units.inchesToMeters(this.getLeftPosition()),
-        Units.inchesToMeters(this.getRightPosition()));
-
-    // if (this.limelight.getDesiredTarget() == TARGET_TYPE.APRILTAG &&
-    // this.limelight.getTargetExists()) {
-    // this.driveOdometry.addVisionMeasurement(this.limelight.getPose2d(),
-    // Timer.getFPGATimestamp());
-    // }
-
     this.drive.feed();
 
     SmartDashboard.putNumber("Pitch", this.gyro.getPitch());
