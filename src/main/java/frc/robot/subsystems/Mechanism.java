@@ -140,14 +140,7 @@ public class Mechanism extends SubsystemBase {
    * @param angle
    */
   private void setWristAngle(double angle) {
-    this.wristController.setSmartPosition(angle, MECHANISM.WRIST_DEFAULT_OFFSET,
-        this.getShoulderPosition() < MECHANISM.SHOUDLER_MAX_EXTENSION_LIMIT
-            ? ((this.shoulderEncoder.getPosition() - MECHANISM.SHOULDER_DEFAULT_OFFSET)
-                / (MECHANISM.SHOUDLER_MAX_EXTENSION_LIMIT -
-                    MECHANISM.SHOULDER_DEFAULT_OFFSET)
-                * (MECHANISM.WRIST_LIMIT - MECHANISM.WRIST_PARALLEL_OFFSET)
-                + MECHANISM.WRIST_PARALLEL_OFFSET + MECHANISM.WRIST_DEFAULT_OFFSET)
-            : MECHANISM.WRIST_LIMIT);
+    this.wristController.setSmartPosition(angle, MECHANISM.WRIST_DEFAULT_OFFSET, MECHANISM.WRIST_LIMIT);
   }
 
   /**
@@ -188,10 +181,10 @@ public class Mechanism extends SubsystemBase {
    * @return "Release Game-Piece" Command
    */
   public Command releaseGamePiece() {
-    return Commands.sequence(
-        runOnce(() -> this.setClawSpeed(-0.31)),
-        new WaitCommand(0.8),
-        runOnce(() -> this.setClawSpeed(0)))
+    return startEnd(
+        () -> this.setClawSpeed(-0.35),
+        () -> this.setClawSpeed(0))
+        .withTimeout(1)
         .beforeStarting(() -> SmartDashboard.putBoolean("Game Piece", false));
   }
 
@@ -202,10 +195,10 @@ public class Mechanism extends SubsystemBase {
    * @return "Launch Game-Piece" Command
    */
   public Command launchGamePiece() {
-    return Commands.sequence(
-        runOnce(() -> this.setClawSpeed(-1)),
-        new WaitCommand(0.8),
-        runOnce(() -> this.setClawSpeed(0)))
+    return startEnd(
+        () -> this.setClawSpeed(-1),
+        () -> this.setClawSpeed(0))
+        .withTimeout(1)
         .beforeStarting(() -> SmartDashboard.putBoolean("Game Piece", false));
   }
 

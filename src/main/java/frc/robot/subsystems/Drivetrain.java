@@ -112,10 +112,10 @@ public class Drivetrain extends SubsystemBase {
     return runOnce(() -> {
       this.setMaxOutput(CHASSIS.DEFAULT_OUTPUT + (max.getAsDouble() * CHASSIS.MAX_INTERVAL)
           - (min.getAsDouble() * CHASSIS.MIN_INTERVAL));
-      this.arcadeDrive(fwd.getAsDouble(), rot.getAsDouble());
+      this.arcadeDrive(fwd.getAsDouble(), rot.getAsDouble() - 0.1);
     })
         .beforeStarting(() -> this.drive.setDeadband(PERIPHERALS.CONTROLLER_DEADBAND))
-        .beforeStarting(this::enableRampRate)
+        .beforeStarting(this.enableRampRate())
         .withInterruptBehavior(InterruptionBehavior.kCancelSelf)
         .withName("arcadeDrive");
   }
@@ -127,10 +127,10 @@ public class Drivetrain extends SubsystemBase {
     return startEnd(() -> {
       this.setPosition(leftPos, rightPos);
     },
-        this::emergencyStop)
+        () -> this.emergencyStop().schedule())
         .until(this::reachedPosition)
-        .beforeStarting(this::enableBrakeMode)
-        .beforeStarting(this::disableRampRate)
+        .beforeStarting(this.enableBrakeMode())
+        .beforeStarting(this.disableRampRate())
         .withName("positionDrive");
   }
 
@@ -143,9 +143,10 @@ public class Drivetrain extends SubsystemBase {
           ((this.gyro.getYaw() - angle) * CHASSIS.TURNING_CONVERSION));
     },
         this::emergencyStop)
-        .beforeStarting(this::enableBrakeMode)
-        .beforeStarting(this::disableRampRate)
-        .beforeStarting(this::resetEncoders)
+        .until(this::reachedPosition)
+        .beforeStarting(this.enableBrakeMode())
+        .beforeStarting(this.disableRampRate())
+        .beforeStarting(runOnce(this::resetEncoders))
         .withName("turnToGyro");
   }
 
@@ -180,9 +181,32 @@ public class Drivetrain extends SubsystemBase {
   }
 
   /**
-   * Uses smart-motion to turn to a limelight target
+   * Uses PID along with limelight data to turn to target
    */
   public Command seekTarget() {
+    return new PIDCommand(
+        new PIDController(
+            CHASSIS.SEEK_CONSTANTS.kP,
+            CHASSIS.SEEK_CONSTANTS.kI,
+            CHASSIS.SEEK_CONSTANTS.kD),
+        // Close the loop on the turn rate
+        this.limelight::getTargetX,
+        // Setpoint is 0
+        0,
+        // Pipe the output to the turning controls
+        (output) -> this
+            .turn(output > 0 ? (output + CHASSIS.SEEK_CONSTANTS.kFF) : (output - CHASSIS.SEEK_CONSTANTS.kFF)),
+        // Require the robot drive
+        this)
+        .andThen(() -> this.emergencyStop().schedule())
+        .beforeStarting(this.enableBrakeMode())
+        .beforeStarting(this.disableRampRate());
+  }
+
+  /**
+   * Uses smart-motion to turn to a limelight target
+   */
+  public Command seekTarget2() {
     return startEnd(() -> {
       this.setPosition((this.limelight.getTargetX() * CHASSIS.TURNING_CONVERSION),
           -(this.limelight.getTargetX() * CHASSIS.TURNING_CONVERSION));
@@ -298,6 +322,16 @@ public class Drivetrain extends SubsystemBase {
    */
   private void driveStraight(double percent) {
     this.frontLeftMotor.set(percent);
+    this.frontRightMotor.set(percent);
+  }
+
+  /**
+   * Sets motor output using arcade drive controls
+   * 
+   * @param percent linear motion [-1 --> 1] (Backwards --> Forwards)
+   */
+  private void turn(double percent) {
+    this.frontLeftMotor.set(-percent);
     this.frontRightMotor.set(percent);
   }
 

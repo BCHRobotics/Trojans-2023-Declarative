@@ -113,7 +113,7 @@ public class RobotContainer {
     this.operatorController.y().onTrue(this.mechanism.grabCone());
     this.operatorController.a().onTrue(this.mechanism.releaseGamePiece());
     this.operatorController.b().onTrue(this.mechanism.disableClaw());
-    this.operatorController.rightTrigger(0.1).onTrue(this.mechanism.launchGamePiece());
+    this.operatorController.rightTrigger().onTrue(this.mechanism.launchGamePiece());
 
     // Operator game piece signals
     this.operatorController.leftBumper().whileTrue(this.mechanism.blinkCubeLED())

@@ -55,9 +55,9 @@ public final class Constants {
 
     // Drive PID Constants TODO: Re-tune Drivetrain PID
     public static final SparkMaxConstants LEFT_DRIVE_CONSTANTS = new SparkMaxConstants(
-        0.00017, 0, 0.0025, 0, 0.00005, -1, 1, 0, 60, 4500, 1000, 0.05);
+        0.00017, 0, 0.0025, 0, 0.00005, -1, 1, 0, 0, 4500, 1000, 0.05);
     public static final SparkMaxConstants RIGHT_DRIVE_CONSTANTS = new SparkMaxConstants(
-        0.00017, 0, 0.0025, 0, 0.00005, -1, 1, 0, 60, 4500, 1000, 0.05);
+        0.00017, 0, 0.0025, 0, 0.00005, -1, 1, 0, 0, 4500, 1000, 0.05);
 
     // Gyro constants
     public static final SerialPort.Port GYRO_PORT = SerialPort.Port.kMXP;
@@ -69,6 +69,13 @@ public final class Constants {
       public static final double kP = 0.006;
       public static final double kI = 0.001;
       public static final double kD = 0;
+    }
+
+    public static final class SEEK_CONSTANTS {
+      public static final double kP = 0.012;
+      public static final double kI = 0;
+      public static final double kD = 0.0001;
+      public static final double kFF = 0.012;
     }
   }
 
@@ -90,34 +97,34 @@ public final class Constants {
     public static final double SHOULDER_DEFAULT_OFFSET = 17;
     public static final double WRIST_DEFAULT_OFFSET = SHOULDER_DEFAULT_OFFSET;
     public static final double WRIST_PARALLEL_OFFSET = 90;
-    public static final float SHOULDER_LIMIT = 105;
+    public static final float SHOULDER_LIMIT = 104;
     public static final float WRIST_LIMIT = 200 + (float) MECHANISM.WRIST_DEFAULT_OFFSET;
     public static final double SHOUDLER_MAX_EXTENSION_LIMIT = 55;
-    public static final double SHOULDER_TOLERANCE = 1;
+    public static final double SHOULDER_TOLERANCE = 0.6;
 
     // Robot arm ABSOLUTE encoder inversions
     public static final boolean SHOULDER_ENCODER_INVERTED = false;
     public static final boolean WRIST_ENCODER_INVERTED = false;
 
     // Robot arm ABSOLUTE encoder offset
-    public static final double SHOULDER_ENCODER_OFFSET = (204.7492790) - MECHANISM.SHOULDER_DEFAULT_OFFSET;
-    public static final double WRIST_ENCODER_OFFSET = (111.6552866) - MECHANISM.WRIST_DEFAULT_OFFSET;
+    public static final double SHOULDER_ENCODER_OFFSET = (204.3725681) - MECHANISM.SHOULDER_DEFAULT_OFFSET;
+    public static final double WRIST_ENCODER_OFFSET = (110.9641671) - MECHANISM.WRIST_DEFAULT_OFFSET;
 
     // Mechanism PID Constants TODO: Re-tune after modified wrist installation
     public static final SparkMaxConstants SHOULDER_CONTROL_CONSTANTS = new SparkMaxConstants(
-        0.00012028, 0, 0.00051398, 0, 2e-6, -0.3, 1,
-        0, 0, 5700, 3000, 0.2);
+        0.00012028, 0, 0.00051398, 0, 2e-6, -0.25, 1,
+        0, 0, 5700, 3000, SHOULDER_TOLERANCE);
 
     public static final SparkMaxConstants WRIST_CONTROL_CONSTANTS = new SparkMaxConstants(
-        2.1028E-05, 0, 5.1398E-05, 0, 0.00004, -1, 1,
-        0, 0, 5700, 5700, 0.1);
+        2.0E-05, 0, 5.14E-05, 0, 0.00004, -0.8, 1,
+        0, 0, 5700, 5500, 0.3);
 
     // Arm preset profiles TODO: Verify Presets with Drive Team
     public static final ArmPresets HOME = new ArmPresets(0, -90, "HOME");
     public static final ArmPresets STOWED = new ArmPresets(0, -55, "STOWED");
     public static final ArmPresets LOW = new ArmPresets(5, -1, "LOW");
     public static final ArmPresets MID = new ArmPresets(24, -55, "MID");
-    public static final ArmPresets HIGH = new ArmPresets(43, -45, "HIGH");
+    public static final ArmPresets HIGH = new ArmPresets(43, -40, "HIGH");
     public static final ArmPresets STATION = new ArmPresets(43, -1, "STATION");
 
     public static final ArmPresets[] PRESETS = { HOME, STOWED, LOW, MID, HIGH, STATION };
