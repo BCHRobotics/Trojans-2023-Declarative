@@ -20,25 +20,16 @@ public final class Autos {
    */
   public static Command driveBack(Drivetrain drive, Mechanism mech) {
     return Commands.sequence(
-        // mech.setArmPreset(MECHANISM.STOWED).until(() -> timer.advanceIfElapsed(1)),
         mech.setArmPreset(MECHANISM.STOWED)
             .withTimeout(1),
 
         mech.launchGamePiece()
-            // .until(() -> timer.advanceIfElapsed(1)),
             .withTimeout(1),
 
         // Drive onto the charging station
         drive.positionDriveCommand(-160, -160)
+            .alongWith(mech.setArmPreset(MECHANISM.HOME))
             .beforeStarting(Commands.runOnce(drive::resetEncoders)));
-  }
-
-  /**
-   * A simple auto routine that turns 180 degrees, and then stops.
-   */
-  public static Command turn(Drivetrain drive) {
-    return drive.positionDriveCommand(31, -31)
-        .beforeStarting(Commands.runOnce(drive::resetEncoders));
   }
 
   /**

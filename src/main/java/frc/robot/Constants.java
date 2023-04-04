@@ -4,7 +4,6 @@
 
 package frc.robot;
 
-import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.wpilibj.SerialPort;
 import frc.robot.util.control.ArmPresets;
 import frc.robot.util.control.SparkMaxConstants;
@@ -22,25 +21,6 @@ import frc.robot.util.control.SparkMaxConstants;
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
-  public static final class PATHING {
-    // "EWWW, Everything is in metric" -Mechancial Team 2023
-
-    // TODO: Get values from sysId
-    public static final double kS = 0.2397;
-    public static final double kV = 1.6742;
-    public static final double kA = 0.8638;
-    public static final double kP = 0.0003;
-
-    public static final double TRACK_WIDTH = 0.63; // m
-    public static final DifferentialDriveKinematics DRIVE_KINEMATICS = new DifferentialDriveKinematics(TRACK_WIDTH);
-
-    public static final double MAX_SPEED = 3; // m/s
-    public static final double MAX_ACCEL = 1.5; // m/s/s
-
-    public static final double RAMSETE_B = 2; // Default: 2
-    public static final double RAMSETE_ZETA = 0.7; // Default: 0.7
-  }
-
   public static final class CHASSIS {
     public static final int FRONT_LEFT_ID = 10;
     public static final int FRONT_RIGHT_ID = 11;
@@ -57,24 +37,27 @@ public final class Constants {
 
     // Chassis dimensions needed
     public static final double WHEEL_DIAMETER = 6;
-    // public static final double TRACK_WIDTH = 19;
-    public static final double TRACK_WIDTH = PATHING.TRACK_WIDTH * 39.3701;
+    public static final double GEAR_RATIO = 7.2;
+    // public static final double TRACK_WIDTH = 19; // Measured [Inches]
+    public static final double TRACK_WIDTH = 24; // Effective [Inches]
 
     // Chasis conversion factors TODO: Re-collect conversion data
     public static final double LEFT_POSITION_CONVERSION = 48 / 18.23804473876953; // inches / revs
     public static final double RIGHT_POSITION_CONVERSION = 48 / 18.14280891418457; // inches / revs
+    public static final double POSITION_CONVERSION = (WHEEL_DIAMETER * Math.PI) / GEAR_RATIO;
 
     public static final double LEFT_VELOCITY_CONVERSION = LEFT_POSITION_CONVERSION / 60.0; // inches / s
     public static final double RIGHT_VELOCITY_CONVERSION = RIGHT_POSITION_CONVERSION / 60.0; // inches / s
+    public static final double VELOCITY_CONVERSION = POSITION_CONVERSION / 60;
 
     // input diameter = Δd inches between center wheels ~~v~~ in inches / degree
     public static final double TURNING_CONVERSION = ((TRACK_WIDTH * Math.PI) / 360);
 
     // Drive PID Constants TODO: Re-tune Drivetrain PID
     public static final SparkMaxConstants LEFT_DRIVE_CONSTANTS = new SparkMaxConstants(
-        0.00017, 0, 0.0025, 0, 0.00005, -1, 1, 0, 0, 4500, 1000, 0.05);
+        0.00017, 0, 0.0025, 0, 0.00005, -1, 1, 0, 60, 4500, 1000, 0.05);
     public static final SparkMaxConstants RIGHT_DRIVE_CONSTANTS = new SparkMaxConstants(
-        0.00017, 0, 0.0025, 0, 0.00005, -1, 1, 0, 0, 4500, 1000, 0.05);
+        0.00017, 0, 0.0025, 0, 0.00005, -1, 1, 0, 60, 4500, 1000, 0.05);
 
     // Gyro constants
     public static final SerialPort.Port GYRO_PORT = SerialPort.Port.kMXP;
@@ -85,13 +68,6 @@ public final class Constants {
     public static final class GYRO_CONSTANTS {
       public static final double kP = 0.006;
       public static final double kI = 0.001;
-      public static final double kD = 0;
-    }
-
-    // Target seek PID Constants TODO: Tune seeking constants
-    public static final class SEEK_CONSTANTS {
-      public static final double kP = 0.005;
-      public static final double kI = 0;
       public static final double kD = 0;
     }
   }
@@ -173,13 +149,11 @@ public final class Constants {
 
     public static final double APRILTAG_HEIGHT = 18.125; // inches
     public static final double REFLECTIVE_TAPE_HEIGHT = 24.125; // inches
+    public static final double CONE_HEIGHT = 43.75; // inches
+    public static final double CUBE_HEIGHT = 4.5; // inches
   }
 
   public static final class MISC {
-
-    public static final double CONE_PRESET = 1;
-    public static final double CUBE_PRESET = 0.7;
-
     public static final int CONE_LED_PORT = 0;
     public static final int CUBE_LED_PORT = 1;
 

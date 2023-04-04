@@ -35,6 +35,14 @@ public class Limelight {
                 this.targetHeight = VISION.APRILTAG_HEIGHT;
                 this.setPipeline(VISION.APRILTAG_PIPELINE);
                 break;
+            case CONE:
+                this.targetHeight = VISION.CONE_HEIGHT;
+                this.setPipeline(VISION.CONE_PIPELINE);
+                break;
+            case CUBE:
+                this.targetHeight = VISION.CUBE_HEIGHT;
+                this.setPipeline(VISION.CUBE_PIPELINE);
+                break;
             default:
                 this.targetHeight = 0;
                 break;
@@ -82,7 +90,7 @@ public class Limelight {
     public double getTargetDistance() {
         return Math.abs(
                 Math.round(
-                        ((VISION.LIMELIGHT_HEIGHT - this.targetHeight) /
+                        (Math.abs(VISION.LIMELIGHT_HEIGHT - this.targetHeight) /
                                 Math.tan(VISION.LIMELIGHT_ANGLE - this.getTargetY())) * 10)
                         / 10); // distance from target in inches
     }

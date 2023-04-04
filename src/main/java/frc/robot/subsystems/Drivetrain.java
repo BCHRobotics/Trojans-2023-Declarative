@@ -42,7 +42,6 @@ public class Drivetrain extends SubsystemBase {
 
   private final DifferentialDrive drive;
 
-  // Objects for gyroscope odometry and balancing
   private final Gyro gyro;
   private final Limelight limelight;
 
@@ -98,7 +97,6 @@ public class Drivetrain extends SubsystemBase {
     this.limelight.setDesiredTarget(TARGET_TYPE.APRILTAG);
 
     this.drive = new DifferentialDrive(this.frontLeftMotor, this.frontRightMotor);
-
   }
 
   /**
@@ -179,26 +177,6 @@ public class Drivetrain extends SubsystemBase {
         .andThen(this::emergencyStop)
         .beforeStarting(this::enableBrakeMode)
         .beforeStarting(this::disableRampRate);
-  }
-
-  public Command seekAprilTag() {
-    return new PIDCommand(
-        new PIDController(
-            CHASSIS.SEEK_CONSTANTS.kP,
-            CHASSIS.SEEK_CONSTANTS.kI,
-            CHASSIS.SEEK_CONSTANTS.kD),
-        // Close the loop on the turn rate
-        this.limelight::getTargetX,
-        // Setpoint is 0
-        0,
-        // Pipe the output to the turning controls
-        (output) -> this.turn(output),
-        // require the drivetrain
-        this)
-        .andThen(this::emergencyStop)
-        .beforeStarting(this::enableBrakeMode)
-        .beforeStarting(this::disableRampRate)
-        .beforeStarting(this::resetEncoders);
   }
 
   /**
@@ -324,16 +302,6 @@ public class Drivetrain extends SubsystemBase {
   }
 
   /**
-   * Sets motor output using arcade drive controls
-   * 
-   * @param percent rotational motion [-1 --> 1] (Left --> Right)
-   */
-  private void turn(double percent) {
-    this.frontLeftMotor.set(percent);
-    this.frontRightMotor.set(-percent);
-  }
-
-  /**
    * Sets the drivetrain's maximum percent output
    * 
    * @param maxOutput in percent decimal
@@ -446,6 +414,20 @@ public class Drivetrain extends SubsystemBase {
    */
   private void searchForTags() {
     this.limelight.setDesiredTarget(TARGET_TYPE.APRILTAG);
+  }
+
+  /**
+   * Sets the limelight target to search for cube.
+   */
+  private void searchForCube() {
+    this.limelight.setDesiredTarget(TARGET_TYPE.CUBE);
+  }
+
+  /**
+   * Sets the limelight target to search for cone.
+   */
+  private void searchForCone() {
+    this.limelight.setDesiredTarget(TARGET_TYPE.CONE);
   }
 
   // Path planning methods
