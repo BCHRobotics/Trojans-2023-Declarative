@@ -52,7 +52,7 @@ public class Mechanism extends SubsystemBase {
 
     this.shoulderMotor.setSmartCurrentLimit(60, 20);
     this.wristMotor.setSmartCurrentLimit(60, 20);
-    this.clawMotor.setSmartCurrentLimit(40, 8);
+    this.clawMotor.setSmartCurrentLimit(40, 20);
 
     this.shoulderMotor.setInverted(false);
     this.wristMotor.setInverted(false);

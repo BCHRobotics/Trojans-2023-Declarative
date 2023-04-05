@@ -40,9 +40,13 @@ public class RobotContainer {
   private final Command scoreGamePiece = Autos.automatedScoringCommand(drivetrain, mechanism);
 
   // The autonomous routines
-  private final Command driveAuto = Autos.driveBack(drivetrain, mechanism);
+  private final Command driveAutoRed = Autos.driveBackRed(drivetrain, mechanism);
+  private final Command driveAutoBlue = Autos.driveBackBlue(drivetrain, mechanism);
   private final Command balanceAuto = Autos.balance(drivetrain);
   private final Command scoreAuto = Autos.scoreTwoPieces(drivetrain, mechanism);
+  private final Command scoreConeMid = Autos.scoreConeMid(drivetrain, mechanism);
+  private final Command scoreCubeMid = Autos.scoreCubeMid(drivetrain, mechanism);
+  private final Command scoreCubeHigh = Autos.scoreCubeHigh(drivetrain, mechanism);
   private final Command scoreAndBalance = Autos.scoreAndBalance(drivetrain, mechanism);
   private final Command mobileBalance = Autos.mobilityAndBalance(drivetrain, mechanism);
 
@@ -61,9 +65,13 @@ public class RobotContainer {
     configureBindings();
 
     // Add commands to the autonomous command chooser
-    this.autoChooser.setDefaultOption("Drive Back", driveAuto);
+    this.autoChooser.setDefaultOption("Drive Back Red", driveAutoRed);
+    this.autoChooser.setDefaultOption("Drive Back Blue", driveAutoBlue);
     this.autoChooser.addOption("Balance", balanceAuto);
     this.autoChooser.addOption("Score", scoreAuto);
+    this.autoChooser.addOption("Score Cone Mid", scoreConeMid);
+    this.autoChooser.addOption("Score Cube Mid", scoreCubeMid);
+    this.autoChooser.addOption("Score Cube High", scoreCubeHigh);
     this.autoChooser.addOption("Score and Balance", scoreAndBalance);
     this.autoChooser.addOption("Mobile Balance", mobileBalance);
 
@@ -93,11 +101,14 @@ public class RobotContainer {
         .onFalse(this.drivetrain.releaseBrakeMode());
 
     // Driver automated routines
-    this.driverController.a().whileTrue(this.drivetrain.seekTarget());
-    this.driverController.x().whileTrue(this.drivetrain.goToTarget());
+    this.driverController.a().whileTrue(this.drivetrain.seekTarget())
+        .onFalse(Commands.runOnce(this.drivetrain::resetLimelight));
+    this.driverController.x().whileTrue(this.drivetrain.goToTarget())
+        .onFalse(Commands.runOnce(this.drivetrain::resetLimelight));
     this.driverController.y().whileTrue(this.drivetrain.balance());
     this.driverController.b().onTrue(Commands.runOnce(this.drivetrain::resetEncoders));
     this.driverController.povRight().onTrue(this.scoreGamePiece);
+    this.driverController.povUp().onTrue(Autos.automatedScoringCommand(drivetrain, mechanism));
 
     // Operator arm preset controls
 

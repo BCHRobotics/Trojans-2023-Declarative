@@ -101,6 +101,6 @@ public class Limelight {
      * @return reached target
      */
     public boolean reachedTargetX() {
-        return (MISC.WITHIN_TOLERANCE(getTargetX(), 0, VISION.LIMELIGHT_TOLERANCE));
+        return (MISC.WITHIN_TOLERANCE(this.getTargetX(), 0, VISION.LIMELIGHT_TOLERANCE));
     }
 }

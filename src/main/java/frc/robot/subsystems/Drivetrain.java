@@ -5,6 +5,7 @@
 package frc.robot.subsystems;
 
 import frc.robot.Constants.CHASSIS;
+import frc.robot.Constants.MISC;
 import frc.robot.Constants.PERIPHERALS;
 import frc.robot.Constants.VISION;
 import frc.robot.Constants.VISION.TARGET_TYPE;
@@ -94,7 +95,8 @@ public class Drivetrain extends SubsystemBase {
 
     this.gyro = Gyro.getInstance();
     this.limelight = Limelight.getInstance();
-    this.limelight.setDesiredTarget(TARGET_TYPE.APRILTAG);
+    this.limelight.setDesiredTarget(TARGET_TYPE.REFLECTIVE_TAPE);
+    this.limelight.setLedMode(1);
 
     this.drive = new DifferentialDrive(this.frontLeftMotor, this.frontRightMotor);
   }
@@ -124,30 +126,13 @@ public class Drivetrain extends SubsystemBase {
    * Sets drivetrain position in inches
    */
   public Command positionDriveCommand(double leftPos, double rightPos) {
-    return startEnd(() -> {
+    return runOnce(() -> {
       this.setPosition(leftPos, rightPos);
-    },
-        () -> this.emergencyStop().schedule())
+    })
         .until(this::reachedPosition)
         .beforeStarting(this.enableBrakeMode())
         .beforeStarting(this.disableRampRate())
         .withName("positionDrive");
-  }
-
-  /**
-   * Sets drivetrain position in inches
-   */
-  public Command turnToGyro(double angle) {
-    return startEnd(() -> {
-      this.setPosition(-((this.gyro.getYaw() - angle) * CHASSIS.TURNING_CONVERSION),
-          ((this.gyro.getYaw() - angle) * CHASSIS.TURNING_CONVERSION));
-    },
-        this::emergencyStop)
-        .until(this::reachedPosition)
-        .beforeStarting(this.enableBrakeMode())
-        .beforeStarting(this.disableRampRate())
-        .beforeStarting(runOnce(this::resetEncoders))
-        .withName("turnToGyro");
   }
 
   /**
@@ -164,20 +149,61 @@ public class Drivetrain extends SubsystemBase {
   public Command balance() {
     return new PIDCommand(
         new PIDController(
-            CHASSIS.GYRO_CONSTANTS.kP,
-            CHASSIS.GYRO_CONSTANTS.kI,
-            CHASSIS.GYRO_CONSTANTS.kD),
+            CHASSIS.BALANCE_CONSTANTS.kP,
+            CHASSIS.BALANCE_CONSTANTS.kI,
+            CHASSIS.BALANCE_CONSTANTS.kD),
         // Close the loop on the turn rate
         this.gyro::getPitch,
         // Setpoint is 0
-        1.0,
+        0.7,
         // Pipe the output to the turning controls
-        (output) -> this.driveStraight(output),
+        (output) -> this
+            .driveStraight(
+                output > 0 ? (output + CHASSIS.BALANCE_CONSTANTS.kFF) : (output - CHASSIS.BALANCE_CONSTANTS.kFF)),
+
         // Require the robot drive
         this)
         .andThen(this::emergencyStop)
         .beforeStarting(this::enableBrakeMode)
         .beforeStarting(this::disableRampRate);
+  }
+
+  /**
+   * Uses PID along with limelight data to turn to target
+   */
+  public Command goToTarget() {
+    return new PIDCommand(
+        new PIDController(
+            CHASSIS.TARGET_CONSTANTS.kP,
+            CHASSIS.TARGET_CONSTANTS.kI,
+            CHASSIS.TARGET_CONSTANTS.kD),
+        // Close the loop on the turn rate
+        this.limelight::getTargetY,
+        // Setpoint is 0
+        0,
+        // Pipe the output to the turning controls
+        (output) -> this
+            .driveStraight(
+                -(output > 0 ? (output + CHASSIS.TARGET_CONSTANTS.kFF) : (output - CHASSIS.TARGET_CONSTANTS.kFF))),
+        // Require the robot drive
+        this)
+        // .until(this::reachedTarget)
+        .andThen(this::emergencyStop)
+        .until(() -> {
+          return this.limelight.getTargetY() <= VISION.LIMELIGHT_TOLERANCE
+              && this.limelight.getTargetY() >= -VISION.LIMELIGHT_TOLERANCE;
+        })
+        .beforeStarting(this::enableBrakeMode)
+        .beforeStarting(this::disableRampRate)
+        .beforeStarting(() -> this.limelight.setLedMode(3))
+        .andThen(this::resetLimelight);
+  }
+
+  /**
+   * Returns whether or not the robot has reached the limelight target
+   */
+  public boolean reachedTarget() {
+    return MISC.WITHIN_TOLERANCE(this.limelight.getTargetY(), 0, VISION.LIMELIGHT_TOLERANCE);
   }
 
   /**
@@ -198,37 +224,46 @@ public class Drivetrain extends SubsystemBase {
             .turn(output > 0 ? (output + CHASSIS.SEEK_CONSTANTS.kFF) : (output - CHASSIS.SEEK_CONSTANTS.kFF)),
         // Require the robot drive
         this)
+        // .until(this::alignedTarget)
+        .andThen(() -> this.emergencyStop().schedule())
+        .beforeStarting(this.enableBrakeMode())
+        .beforeStarting(this.disableRampRate())
+        .beforeStarting(() -> this.limelight.setLedMode(3))
+        .andThen(this::resetLimelight);
+  }
+
+  /**
+   * Returns whether or not the robot has aligned with the limelight target
+   */
+  public boolean alignedTarget() {
+    return MISC.WITHIN_TOLERANCE(this.limelight.getTargetX(), 0, VISION.LIMELIGHT_TOLERANCE);
+  }
+
+  /**
+   * Uses PID along with gyro data to turn to a provided heading
+   */
+  public Command turnToGyro(double angle) {
+    return new PIDCommand(
+        new PIDController(
+            CHASSIS.ALIGN_CONSTANTS.kP,
+            CHASSIS.ALIGN_CONSTANTS.kI,
+            CHASSIS.ALIGN_CONSTANTS.kD),
+        // Close the loop on the turn rate
+        this.gyro::getYaw,
+        // Setpoint is 0
+        angle,
+        // Pipe the output to the turning controls
+        (output) -> this
+            .turn(output > 0 ? (output + CHASSIS.ALIGN_CONSTANTS.kFF) : (output - CHASSIS.ALIGN_CONSTANTS.kFF)),
+        // Require the robot drive
+        this)
         .andThen(() -> this.emergencyStop().schedule())
         .beforeStarting(this.enableBrakeMode())
         .beforeStarting(this.disableRampRate());
   }
 
-  /**
-   * Uses smart-motion to turn to a limelight target
-   */
-  public Command seekTarget2() {
-    return startEnd(() -> {
-      this.setPosition((this.limelight.getTargetX() * CHASSIS.TURNING_CONVERSION),
-          -(this.limelight.getTargetX() * CHASSIS.TURNING_CONVERSION));
-    },
-        this::emergencyStop)
-        .until(this.limelight::reachedTargetX)
-        .beforeStarting(this::enableBrakeMode)
-        .beforeStarting(this::disableRampRate)
-        .beforeStarting(this::resetEncoders)
-        .beforeStarting(this::searchForTape)
-        .andThen(this::searchForTags)
-        .withName("huntTarget");
-  }
-
-  /**
-   * Uses smart-motion to drive towards a limelight target
-   */
-  public Command goToTarget() {
-    return this.positionDriveCommand(this.limelight.getTargetDistance() - VISION.MID_ARM_OFFSET,
-        this.limelight.getTargetDistance() - VISION.MID_ARM_OFFSET)
-        .beforeStarting(this::searchForTape)
-        .andThen(this::searchForTags);
+  public void resetLimelight() {
+    this.limelight.setLedMode(1);
   }
 
   /**

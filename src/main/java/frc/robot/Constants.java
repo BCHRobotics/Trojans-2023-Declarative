@@ -32,7 +32,7 @@ public final class Constants {
     public static final double MAX_INTERVAL = 1.0 - DEFAULT_OUTPUT;
     public static final double MIN_INTERVAL = DEFAULT_OUTPUT - 0.2;
     public static final double RAMP_RATE = 0.15; // s
-    public static final double TOLERANCE = 0.05; // in
+    public static final double TOLERANCE = 1; // in
     public static final boolean INVERTED = false;
 
     // Chassis dimensions needed
@@ -64,18 +64,36 @@ public final class Constants {
     public static final boolean GYRO_OUTPUT_INVERTED = false;
     public static final double GYRO_TOLERANCE = 0.8;
 
-    // Gyro PID Constants TODO: Re-tune gyro
-    public static final class GYRO_CONSTANTS {
+    // Gyro balance PID Constants TODO: Re-tune gyro
+    public static final class BALANCE_CONSTANTS {
       public static final double kP = 0.006;
       public static final double kI = 0.001;
-      public static final double kD = 0;
+      public static final double kD = 0.0006;
+      public static final double kFF = 0.002;
     }
 
+    // Limelight PID constants
     public static final class SEEK_CONSTANTS {
       public static final double kP = 0.012;
       public static final double kI = 0;
-      public static final double kD = 0.0001;
-      public static final double kFF = 0.012;
+      public static final double kD = 0.0002;
+      public static final double kFF = 0.0132;
+    }
+
+    // Limelight PID constants
+    public static final class TARGET_CONSTANTS {
+      public static final double kP = 0.017;
+      public static final double kI = 0;
+      public static final double kD = 0.0002;
+      public static final double kFF = 0.014;
+    }
+
+    // Gyro Turn PID constants
+    public static final class ALIGN_CONSTANTS {
+      public static final double kP = 0.0122;
+      public static final double kI = 0;
+      public static final double kD = 0.0002;
+      public static final double kFF = 0.0132;
     }
   }
 
@@ -147,9 +165,9 @@ public final class Constants {
     public static final int NEURAL_NETWORK_PIPELINE = 4;
     public static final int APRILTAG_PIPELINE = 7;
 
-    public static final double LIMELIGHT_ANGLE = 21.5; // degrees
-    public static final double LIMELIGHT_HEIGHT = 91.25; // inches
-    public static final double LIMELIGHT_TOLERANCE = 0.2; // degrees (x axis)
+    public static final double LIMELIGHT_ANGLE = 13.7; // degrees
+    public static final double LIMELIGHT_HEIGHT = 43.5; // inches
+    public static final double LIMELIGHT_TOLERANCE = 0.15; // degrees (x axis)
     public static final double LIMELIGHT_CHASSIS_OFFSET = 13; // inches
 
     public static final double MID_ARM_OFFSET = 42; // inches
@@ -165,7 +183,7 @@ public final class Constants {
     public static final int CUBE_LED_PORT = 1;
 
     public static final double CUBE_DETECTION_CURRENT = 20;
-    public static final double CONE_DETECTION_CURRENT = 27;
+    public static final double CONE_DETECTION_CURRENT = 28;
 
     public static final double BLINK_INTERVAL = 0.3; // seconds
 
