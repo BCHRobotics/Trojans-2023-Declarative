@@ -6,10 +6,8 @@ package frc.robot;
 
 // Import required modules
 import frc.robot.Commands.Autos;
-import frc.robot.Constants.MECHANISM;
 import frc.robot.Constants.PERIPHERALS;
 import frc.robot.subsystems.Drivetrain;
-import frc.robot.subsystems.Mechanism;
 
 // Import required libraries
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -31,25 +29,13 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 public class RobotContainer {
   // The robot's subsystems
   private final Drivetrain drivetrain = new Drivetrain();
-  private final Mechanism mechanism = new Mechanism();
 
   // The driver's controller
   CommandXboxController driverController = new CommandXboxController(PERIPHERALS.DRIVER_PORT);
   CommandXboxController operatorController = new CommandXboxController(PERIPHERALS.OPERATOR_PORT);
 
-  private final Command scoreGamePiece = Autos.automatedScoringCommand(drivetrain, mechanism);
-
   // The autonomous routines
-  private final Command driveBackAuto = Autos.driveBack(drivetrain, mechanism);
   private final Command balanceAuto = Autos.balance(drivetrain);
-  private final Command scoreTwoAuto = Autos.scoreTwoPieces(drivetrain, mechanism);
-  private final Command scoreConeMid = Autos.scoreConeMid(drivetrain, mechanism);
-  private final Command scoreCubeMid = Autos.scoreCubeMid(drivetrain, mechanism);
-  private final Command scoreCubeHigh = Autos.scoreCubeHigh(drivetrain, mechanism);
-  private final Command scoreAndBalance = Autos.scoreAndBalance(drivetrain, mechanism);
-  private final Command scoreMidAndBalance = Autos.scoreMidAndBalance(drivetrain, mechanism);
-  private final Command scoreHighAndBalance = Autos.scoreHighAndBalance(drivetrain, mechanism);
-  // private final Command mobileBalance = Autos.mobilityAndBalance(drivetrain,
   // mechanism);
 
   // A chooser for autonomous commands
@@ -67,16 +53,7 @@ public class RobotContainer {
     configureBindings();
 
     // Add commands to the autonomous command chooser
-    this.autoChooser.setDefaultOption("Drive Back", driveBackAuto);
-    this.autoChooser.addOption("Balance Forward", balanceAuto);
-    this.autoChooser.addOption("Score Two", scoreTwoAuto);
-    this.autoChooser.addOption("Score Cone Mid", scoreConeMid);
-    this.autoChooser.addOption("Score Cube Mid", scoreCubeMid);
-    this.autoChooser.addOption("Score Cube High", scoreCubeHigh);
-    this.autoChooser.addOption("Score and Balance", scoreAndBalance);
-    this.autoChooser.addOption("Score Mid and Balance", scoreMidAndBalance);
-    this.autoChooser.addOption("Score High and Balance", scoreHighAndBalance);
-    // this.autoChooser.addOption("Mobile Balance", mobileBalance);
+    this.autoChooser.addOption("Balance", balanceAuto);
 
     SmartDashboard.putData("Autonomous Route", this.autoChooser);
   }
@@ -110,30 +87,7 @@ public class RobotContainer {
         .onFalse(Commands.runOnce(this.drivetrain::resetLimelight));
     this.driverController.y().whileTrue(this.drivetrain.balance());
     this.driverController.b().onTrue(Commands.runOnce(this.drivetrain::resetEncoders));
-    this.driverController.povRight().onTrue(this.scoreGamePiece);
-    this.driverController.povUp().onTrue(Autos.automatedScoringCommand(drivetrain, mechanism));
 
-    // Operator arm preset controls
-
-    this.operatorController.leftStick().onTrue(this.mechanism.setArmPreset(MECHANISM.HOME));
-    this.operatorController.povLeft().onTrue(this.mechanism.setArmPreset(MECHANISM.STOWED));
-    this.operatorController.povDown().onTrue(this.mechanism.setArmPreset(MECHANISM.LOW));
-    this.operatorController.povRight().onTrue(this.mechanism.setArmPreset(MECHANISM.MID));
-    this.operatorController.povUp().onTrue(this.mechanism.setArmPreset(MECHANISM.HIGH));
-    this.operatorController.rightStick().onTrue(this.mechanism.setArmPreset(MECHANISM.STATION));
-
-    // Operator intake claw controls
-    this.operatorController.x().onTrue(this.mechanism.grabCube());
-    this.operatorController.y().onTrue(this.mechanism.grabCone());
-    this.operatorController.a().onTrue(this.mechanism.releaseGamePiece());
-    this.operatorController.b().onTrue(this.mechanism.disableClaw());
-    this.operatorController.rightTrigger().onTrue(this.mechanism.launchGamePiece());
-
-    // Operator game piece signals
-    this.operatorController.leftBumper().whileTrue(this.mechanism.blinkCubeLED())
-        .onFalse(this.mechanism.setCubeLED(false));
-    this.operatorController.rightBumper().whileTrue(this.mechanism.blinkConeLED())
-        .onFalse(this.mechanism.setConeLED(false));
   }
 
   /**
@@ -141,14 +95,6 @@ public class RobotContainer {
    */
   public void EMERGENCY_STOP() {
     this.drivetrain.killSwitch();
-    this.mechanism.shutDown();
-  }
-
-  /**
-   * Resets arm to default position
-   */
-  public Command ARM_RESET() {
-    return this.mechanism.setArmPreset(MECHANISM.HOME);
   }
 
   /**

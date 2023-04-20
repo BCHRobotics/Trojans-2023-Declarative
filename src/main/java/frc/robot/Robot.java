@@ -91,7 +91,6 @@ public class Robot extends TimedRobot {
       this.autonomousCommand.cancel();
     }
     this.robotContainer.CHASSIS_RESET().schedule();
-    this.robotContainer.ARM_RESET().schedule();
   }
 
   /** This function is called periodically during operator control. */

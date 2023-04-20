@@ -5,7 +5,6 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.SerialPort;
-import frc.robot.util.control.ArmPresets;
 import frc.robot.util.control.SparkMaxConstants;
 
 /**
@@ -97,57 +96,6 @@ public final class Constants {
     }
   }
 
-  public static final class MECHANISM {
-    // Robot arm CAN IDs
-    public static final int SHOULDER_ID = 20;
-    public static final int WRIST_ID = 21;
-    public static final int CLAW_ID = 22;
-
-    // Robot dimensions (inches)
-    public static final double SHOULDER_HEIGHT = 36.75;
-    public static final double ARM_LENGTH = 36;
-    public static final double WRIST_HEIGHT_OFFSET = 2.25;
-    public static final double FOREARM_LENGTH = 15;
-
-    // Robot arm conversion factors
-    public static final double SHOULDER_CONVERSION_FACTOR = 360; // Convert revs to degrees
-    public static final double WRIST_CONVERSION_FACTOR = 360; // Convert revs to degrees
-    public static final double SHOULDER_DEFAULT_OFFSET = 17;
-    public static final double WRIST_DEFAULT_OFFSET = SHOULDER_DEFAULT_OFFSET;
-    public static final double WRIST_PARALLEL_OFFSET = 90;
-    public static final float SHOULDER_LIMIT = 104;
-    public static final float WRIST_LIMIT = 200 + (float) MECHANISM.WRIST_DEFAULT_OFFSET;
-    public static final double SHOUDLER_MAX_EXTENSION_LIMIT = 55;
-    public static final double SHOULDER_TOLERANCE = 0.6;
-
-    // Robot arm ABSOLUTE encoder inversions
-    public static final boolean SHOULDER_ENCODER_INVERTED = false;
-    public static final boolean WRIST_ENCODER_INVERTED = false;
-
-    // Robot arm ABSOLUTE encoder offset
-    public static final double SHOULDER_ENCODER_OFFSET = (204.3725681) - MECHANISM.SHOULDER_DEFAULT_OFFSET;
-    public static final double WRIST_ENCODER_OFFSET = (110.9641671) - MECHANISM.WRIST_DEFAULT_OFFSET;
-
-    // Mechanism PID Constants TODO: Re-tune after modified wrist installation
-    public static final SparkMaxConstants SHOULDER_CONTROL_CONSTANTS = new SparkMaxConstants(
-        0.00012028, 0, 0.00051398, 0, 2e-6, -0.25, 1,
-        0, 0, 5700, 3000, SHOULDER_TOLERANCE);
-
-    public static final SparkMaxConstants WRIST_CONTROL_CONSTANTS = new SparkMaxConstants(
-        2.0E-05, 0, 5.14E-05, 0, 0.00004, -0.8, 1,
-        0, 0, 5700, 5500, 0.3);
-
-    // Arm preset profiles TODO: Verify Presets with Drive Team
-    public static final ArmPresets HOME = new ArmPresets(0, -90, "HOME");
-    public static final ArmPresets STOWED = new ArmPresets(0, -55, "STOWED");
-    public static final ArmPresets LOW = new ArmPresets(5, -1, "LOW");
-    public static final ArmPresets MID = new ArmPresets(24, -55, "MID");
-    public static final ArmPresets HIGH = new ArmPresets(43, -40, "HIGH");
-    public static final ArmPresets STATION = new ArmPresets(43, -1, "STATION");
-
-    public static final ArmPresets[] PRESETS = { HOME, STOWED, LOW, MID, HIGH, STATION };
-  }
-
   public static final class PERIPHERALS {
     public static final int DRIVER_PORT = 0;
     public static final int OPERATOR_PORT = 1;
@@ -179,14 +127,6 @@ public final class Constants {
   }
 
   public static final class MISC {
-    public static final int CONE_LED_PORT = 0;
-    public static final int CUBE_LED_PORT = 1;
-
-    public static final double CUBE_DETECTION_CURRENT = 22;
-    public static final double CONE_DETECTION_CURRENT = 29;
-
-    public static final double BLINK_INTERVAL = 0.3; // seconds
-
     public static final double ENSURE_RANGE(double value, double min, double max) {
       return Math.min(Math.max(value, min), max);
     }
