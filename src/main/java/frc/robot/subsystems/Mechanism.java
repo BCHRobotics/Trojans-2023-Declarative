@@ -95,7 +95,7 @@ public class Mechanism extends SubsystemBase {
     this.wristController.setPIDWrapping(false);
 
     this.shoulderController.setMotionProfileType(AccelStrategy.kSCurve);
-    this.wristController.setMotionProfileType(AccelStrategy.kSCurve);
+    this.wristController.setMotionProfileType(AccelStrategy.kTrapezoidal);
 
     this.coneLED = new DigitalOutput(MISC.CONE_LED_PORT);
     this.cubeLED = new DigitalOutput(MISC.CUBE_LED_PORT);
@@ -161,7 +161,7 @@ public class Mechanism extends SubsystemBase {
    * @return "Grab Game-Piece" Command
    */
   public Command grabCone() {
-    return startEnd(() -> this.setClawSpeed(0.6), () -> this.setClawSpeed(0.02))
+    return startEnd(() -> this.setClawSpeed(0.7), () -> this.setClawSpeed(0.02))
         .until(() -> this.gamePieceDetected(MISC.CONE_DETECTION_CURRENT))
         .andThen(
             () -> SmartDashboard.putBoolean("Game Piece", true));
@@ -184,7 +184,7 @@ public class Mechanism extends SubsystemBase {
     return startEnd(
         () -> this.setClawSpeed(-0.35),
         () -> this.setClawSpeed(0))
-        .withTimeout(1)
+        .withTimeout(0.8)
         .beforeStarting(() -> SmartDashboard.putBoolean("Game Piece", false));
   }
 
@@ -198,7 +198,7 @@ public class Mechanism extends SubsystemBase {
     return startEnd(
         () -> this.setClawSpeed(-1),
         () -> this.setClawSpeed(0))
-        .withTimeout(1)
+        .withTimeout(0.8)
         .beforeStarting(() -> SmartDashboard.putBoolean("Game Piece", false));
   }
 

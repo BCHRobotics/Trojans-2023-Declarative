@@ -28,8 +28,8 @@ public final class Constants {
     public static final int BACK_RIGHT_ID = 13;
 
     // Drivetrain restrictions
-    public static final double DEFAULT_OUTPUT = 0.75;
-    public static final double MAX_INTERVAL = 1.0 - DEFAULT_OUTPUT;
+    public static final double DEFAULT_OUTPUT = 0.7;
+    public static final double MAX_INTERVAL = 1 - DEFAULT_OUTPUT;
     public static final double MIN_INTERVAL = DEFAULT_OUTPUT - 0.2;
     public static final double RAMP_RATE = 0.15; // s
     public static final double TOLERANCE = 1; // in
@@ -182,8 +182,8 @@ public final class Constants {
     public static final int CONE_LED_PORT = 0;
     public static final int CUBE_LED_PORT = 1;
 
-    public static final double CUBE_DETECTION_CURRENT = 20;
-    public static final double CONE_DETECTION_CURRENT = 28;
+    public static final double CUBE_DETECTION_CURRENT = 22;
+    public static final double CONE_DETECTION_CURRENT = 29;
 
     public static final double BLINK_INTERVAL = 0.3; // seconds
 

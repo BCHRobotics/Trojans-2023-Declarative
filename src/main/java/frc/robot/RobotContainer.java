@@ -40,15 +40,17 @@ public class RobotContainer {
   private final Command scoreGamePiece = Autos.automatedScoringCommand(drivetrain, mechanism);
 
   // The autonomous routines
-  private final Command driveAutoRed = Autos.driveBackRed(drivetrain, mechanism);
-  private final Command driveAutoBlue = Autos.driveBackBlue(drivetrain, mechanism);
+  private final Command driveBackAuto = Autos.driveBack(drivetrain, mechanism);
   private final Command balanceAuto = Autos.balance(drivetrain);
-  private final Command scoreAuto = Autos.scoreTwoPieces(drivetrain, mechanism);
+  private final Command scoreTwoAuto = Autos.scoreTwoPieces(drivetrain, mechanism);
   private final Command scoreConeMid = Autos.scoreConeMid(drivetrain, mechanism);
   private final Command scoreCubeMid = Autos.scoreCubeMid(drivetrain, mechanism);
   private final Command scoreCubeHigh = Autos.scoreCubeHigh(drivetrain, mechanism);
   private final Command scoreAndBalance = Autos.scoreAndBalance(drivetrain, mechanism);
-  private final Command mobileBalance = Autos.mobilityAndBalance(drivetrain, mechanism);
+  private final Command scoreMidAndBalance = Autos.scoreMidAndBalance(drivetrain, mechanism);
+  private final Command scoreHighAndBalance = Autos.scoreHighAndBalance(drivetrain, mechanism);
+  // private final Command mobileBalance = Autos.mobilityAndBalance(drivetrain,
+  // mechanism);
 
   // A chooser for autonomous commands
   SendableChooser<Command> autoChooser = new SendableChooser<>();
@@ -65,15 +67,16 @@ public class RobotContainer {
     configureBindings();
 
     // Add commands to the autonomous command chooser
-    this.autoChooser.setDefaultOption("Drive Back Red", driveAutoRed);
-    this.autoChooser.setDefaultOption("Drive Back Blue", driveAutoBlue);
-    this.autoChooser.addOption("Balance", balanceAuto);
-    this.autoChooser.addOption("Score", scoreAuto);
+    this.autoChooser.setDefaultOption("Drive Back", driveBackAuto);
+    this.autoChooser.addOption("Balance Forward", balanceAuto);
+    this.autoChooser.addOption("Score Two", scoreTwoAuto);
     this.autoChooser.addOption("Score Cone Mid", scoreConeMid);
     this.autoChooser.addOption("Score Cube Mid", scoreCubeMid);
     this.autoChooser.addOption("Score Cube High", scoreCubeHigh);
     this.autoChooser.addOption("Score and Balance", scoreAndBalance);
-    this.autoChooser.addOption("Mobile Balance", mobileBalance);
+    this.autoChooser.addOption("Score Mid and Balance", scoreMidAndBalance);
+    this.autoChooser.addOption("Score High and Balance", scoreHighAndBalance);
+    // this.autoChooser.addOption("Mobile Balance", mobileBalance);
 
     SmartDashboard.putData("Autonomous Route", this.autoChooser);
   }

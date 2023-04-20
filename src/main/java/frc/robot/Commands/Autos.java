@@ -17,7 +17,7 @@ public final class Autos {
          * A simple auto routine that drives backward a specified distance, and then
          * stops.
          */
-        public static Command driveBackBlue(Drivetrain drive, Mechanism mech) {
+        public static Command driveBack(Drivetrain drive, Mechanism mech) {
                 return Commands.sequence(
                                 mech.setArmPreset(MECHANISM.STOWED)
                                                 .withTimeout(1),
@@ -32,30 +32,6 @@ public final class Autos {
                                                 .beforeStarting(Commands.runOnce(drive::resetEncoders)),
 
                                 drive.positionDriveCommand(-32, 32)
-                                                .alongWith(mech.setArmPreset(MECHANISM.LOW))
-                                                .withTimeout(3)
-                                                .beforeStarting(Commands.runOnce(drive::resetEncoders)));
-        }
-
-        /**
-         * A simple auto routine that drives backward a specified distance, and then
-         * stops.
-         */
-        public static Command driveBackRed(Drivetrain drive, Mechanism mech) {
-                return Commands.sequence(
-                                mech.setArmPreset(MECHANISM.STOWED)
-                                                .withTimeout(1),
-
-                                mech.releaseGamePiece()
-                                                .withTimeout(1),
-
-                                drive.positionDriveCommand(-130, -130)
-                                                .alongWith(mech.setArmPreset(MECHANISM.HOME))
-                                                .withTimeout(5)
-                                                .beforeStarting(Commands.runOnce(drive::resetEncoders)),
-
-                                drive.positionDriveCommand(32, -32)
-                                                .alongWith(mech.setArmPreset(MECHANISM.LOW))
                                                 .withTimeout(3)
                                                 .beforeStarting(Commands.runOnce(drive::resetEncoders)));
         }
@@ -132,7 +108,7 @@ public final class Autos {
                                                 .beforeStarting(Commands.runOnce(drive::resetEncoders)),
 
                                 drive.positionDriveCommand(-32, 32)
-                                                .alongWith(mech.setArmPreset(MECHANISM.LOW))
+                                                // .alongWith(mech.setArmPreset(MECHANISM.LOW))
                                                 .withTimeout(3)
                                                 .beforeStarting(Commands.runOnce(drive::resetEncoders)));
         }
@@ -144,19 +120,14 @@ public final class Autos {
         public static Command scoreCubeMid(Drivetrain drive, Mechanism mech) {
                 return Commands.sequence(
                                 mech.setArmPreset(MECHANISM.MID)
-                                                .withTimeout(2),
+                                                .withTimeout(1),
 
                                 mech.launchGamePiece()
                                                 .withTimeout(1),
 
-                                drive.positionDriveCommand(-120, -120)
+                                drive.positionDriveCommand(-140, -140)
                                                 .alongWith(mech.setArmPreset(MECHANISM.HOME))
                                                 .withTimeout(5)
-                                                .beforeStarting(Commands.runOnce(drive::resetEncoders)),
-
-                                drive.positionDriveCommand(-32, 32)
-                                                .alongWith(mech.setArmPreset(MECHANISM.LOW))
-                                                .withTimeout(3)
                                                 .beforeStarting(Commands.runOnce(drive::resetEncoders)));
         }
 
@@ -172,13 +143,9 @@ public final class Autos {
                                 mech.launchGamePiece()
                                                 .withTimeout(1),
 
-                                drive.positionDriveCommand(-120, -120)
+                                drive.positionDriveCommand(-140, -140)
                                                 .alongWith(mech.setArmPreset(MECHANISM.HOME))
                                                 .withTimeout(5)
-                                                .beforeStarting(Commands.runOnce(drive::resetEncoders)),
-
-                                drive.positionDriveCommand(-32, 32)
-                                                .withTimeout(3)
                                                 .beforeStarting(Commands.runOnce(drive::resetEncoders)));
         }
 
@@ -197,6 +164,29 @@ public final class Autos {
 
                                 // Drive onto the charging station
                                 drive.positionDriveCommand(-96, -96)
+                                                .alongWith(mech.setArmPreset(MECHANISM.HOME))
+                                                .withTimeout(6),
+
+                                // Balance the robot
+                                drive.balance())
+                                .beforeStarting(Commands.runOnce(drive::resetEncoders));
+        }
+
+        /**
+         * A highly sophisticated auto routine that places a gamepiece in the hybrid
+         * zone,
+         * drives back, and then drives to the charging station and balances.
+         */
+        public static Command scoreMidAndBalance(Drivetrain drive, Mechanism mech) {
+                return Commands.sequence(
+                                mech.setArmPreset(MECHANISM.MID)
+                                                .withTimeout(1),
+
+                                mech.releaseGamePiece()
+                                                .withTimeout(1),
+
+                                // Drive onto the charging station
+                                drive.positionDriveCommand(-84, -84)
                                                 .alongWith(mech.setArmPreset(MECHANISM.HOME))
                                                 .withTimeout(6),
 
@@ -233,8 +223,8 @@ public final class Autos {
          */
         public static Command mobilityAndBalance(Drivetrain drive, Mechanism mech) {
                 return Commands.sequence(
-                                mech.setArmPreset(MECHANISM.HIGH)
-                                                .withTimeout(2),
+                                mech.setArmPreset(MECHANISM.STOWED)
+                                                .withTimeout(1),
 
                                 mech.launchGamePiece()
                                                 .withTimeout(1),

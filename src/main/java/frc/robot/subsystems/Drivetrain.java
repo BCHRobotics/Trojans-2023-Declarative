@@ -114,7 +114,7 @@ public class Drivetrain extends SubsystemBase {
     return runOnce(() -> {
       this.setMaxOutput(CHASSIS.DEFAULT_OUTPUT + (max.getAsDouble() * CHASSIS.MAX_INTERVAL)
           - (min.getAsDouble() * CHASSIS.MIN_INTERVAL));
-      this.arcadeDrive(fwd.getAsDouble(), rot.getAsDouble() - 0.1);
+      this.arcadeDrive(fwd.getAsDouble(), (rot.getAsDouble() * 0.9));
     })
         .beforeStarting(() -> this.drive.setDeadband(PERIPHERALS.CONTROLLER_DEADBAND))
         .beforeStarting(this.enableRampRate())
@@ -126,7 +126,7 @@ public class Drivetrain extends SubsystemBase {
    * Sets drivetrain position in inches
    */
   public Command positionDriveCommand(double leftPos, double rightPos) {
-    return runOnce(() -> {
+    return run(() -> {
       this.setPosition(leftPos, rightPos);
     })
         .until(this::reachedPosition)
