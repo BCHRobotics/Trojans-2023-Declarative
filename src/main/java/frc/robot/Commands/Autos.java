@@ -4,202 +4,304 @@
 
 package frc.robot.Commands;
 
-import java.util.List;
-
-import com.pathplanner.lib.PathPlannerTrajectory;
-import com.pathplanner.lib.commands.PPRamseteCommand;
-
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.RamseteController;
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.math.trajectory.TrajectoryConfig;
-import edu.wpi.first.math.trajectory.TrajectoryGenerator;
-import edu.wpi.first.math.trajectory.constraint.DifferentialDriveVoltageConstraint;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import frc.robot.Constants.MECHANISM;
-import frc.robot.Constants.PATHING;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.Mechanism;
 
 /** Container for auto command factories. */
 public final class Autos {
 
-  private static final Timer timer = new Timer();
+        /**
+         * A simple auto routine that drives backward a specified distance, and then
+         * stops.
+         */
+        public static Command driveBack(Drivetrain drive, Mechanism mech) {
+                return Commands.sequence(
+                                mech.setArmPreset(MECHANISM.STOWED)
+                                                .withTimeout(1),
 
-  /**
-   * A simple auto routine that drives backward a specified distance, and then
-   * stops.
-   */
-  public static Command driveBack(Drivetrain drive) {
-    return drive.positionDriveCommand(-160, -160).beforeStarting(drive::resetEncoders);
-  }
+                                mech.releaseGamePiece()
+                                                .withTimeout(1),
 
-  /**
-   * A complex auto routine that drives backward, then balances
-   */
-  public static Command driveBackAndBalance(Drivetrain drive) {
-    return Commands.sequence(
-        // Drive onto the charging station
-        drive.positionDriveCommand(-102, -102).beforeStarting(drive::resetEncoders),
+                                // Drive onto the charging station
+                                drive.positionDriveCommand(-130, -130)
+                                                .alongWith(mech.setArmPreset(MECHANISM.HOME))
+                                                .withTimeout(5)
+                                                .beforeStarting(Commands.runOnce(drive::resetEncoders)),
 
-        // Balance the robot
-        drive.balance());
-  }
+                                drive.positionDriveCommand(-32, 32)
+                                                .withTimeout(3)
+                                                .beforeStarting(Commands.runOnce(drive::resetEncoders)));
+        }
 
-  /**
-   * A complex auto routine that places a game piece, picks up another one then
-   * places it.
-   */
-  public static Command scoreTwoPieces(Drivetrain drive, Mechanism mech) {
-    return Commands.sequence(
+        /**
+         * A complex auto routine that drives backward, then balances
+         */
+        public static Command balance(Drivetrain drive) {
+                return Commands.sequence(
+                                // Drive onto the charging station
+                                drive.positionDriveCommand(94, 94)
+                                                .withTimeout(6),
 
-        // Raise arm to reach target
-        mech.setArmPreset(MECHANISM.MID).until(() -> timer.advanceIfElapsed(2)),
+                                // Balance the robot
+                                drive.balance())
+                                .beforeStarting(Commands.runOnce(drive::resetEncoders));
+        }
 
-        drive.positionDriveCommand(16, 16).beforeStarting(drive::resetEncoders).until(() -> timer.advanceIfElapsed(3)),
+        /**
+         * A complex auto routine that places a game piece, picks up another one then
+         * places it.
+         */
+        public static Command scoreTwoPieces(Drivetrain drive, Mechanism mech) {
+                return Commands.sequence(
+                                // Raise arm to reach target
 
-        // TODO: add drop game piece command
+                                mech.setArmPreset(MECHANISM.STOWED)
+                                                .withTimeout(1),
 
-        drive.positionDriveCommand(-40, -40)
-            .alongWith(mech.setArmPreset(MECHANISM.TRANSPORT)).until(() -> timer.advanceIfElapsed(3.5)),
+                                mech.releaseGamePiece()
+                                                .withTimeout(1),
 
-        drive.positionDriveCommand(-72, -8).until(() -> timer.advanceIfElapsed(3.5)),
+                                // Drive onto the charging station
+                                drive.positionDriveCommand(-120, -120)
+                                                .beforeStarting(Commands.runOnce(drive::resetEncoders))
+                                                .alongWith(mech.setArmPreset(MECHANISM.HOME))
+                                                .withTimeout(6),
 
-        mech.setArmPreset(MECHANISM.GROUND).until(() -> timer.advanceIfElapsed(2)),
+                                drive.positionDriveCommand(-33, 33)
+                                                .beforeStarting(Commands.runOnce(drive::resetEncoders))
+                                                .alongWith(mech.setArmPreset(MECHANISM.LOW))
+                                                .withTimeout(4),
 
-        drive.positionDriveCommand(-52, 12).until(() -> timer.advanceIfElapsed(3)),
+                                drive.positionDriveCommand(20, 20)
+                                                .beforeStarting(Commands.runOnce(drive::resetEncoders))
+                                                .alongWith(mech.grabCone())
+                                                .withTimeout(4),
 
-        // TODO: add ground pickup command
+                                drive.positionDriveCommand(31, -31)
+                                                .alongWith(mech.grabCone())
+                                                .beforeStarting(Commands.runOnce(drive::resetEncoders))
+                                                .withTimeout(3),
 
-        mech.setArmPreset(MECHANISM.TRANSPORT).until(() -> timer.advanceIfElapsed(3)),
+                                drive.positionDriveCommand(90, 90)
+                                                .alongWith(mech.setArmPreset(MECHANISM.STOWED))
+                                                .beforeStarting(Commands.runOnce(drive::resetEncoders))
+                                                .withTimeout(4),
 
-        drive.positionDriveCommand(-72, -8).until(() -> timer.advanceIfElapsed(3)),
+                                Autos.automatedScoringCommand(drive, mech));
+        }
 
-        drive.positionDriveCommand(-40, -40).until(() -> timer.advanceIfElapsed(3)),
+        /**
+         * A simple auto routine that drives backward a specified distance, and then
+         * stops.
+         */
+        public static Command scoreConeMid(Drivetrain drive, Mechanism mech) {
+                return Commands.sequence(
+                                Autos.automatedScoringCommand(drive, mech)
+                                                .withTimeout(6),
 
-        drive.positionDriveCommand(12, 12).alongWith(mech.setArmPreset(MECHANISM.MID))
-            .until(() -> timer.advanceIfElapsed(5)),
+                                drive.positionDriveCommand(-120, -120)
+                                                .alongWith(mech.setArmPreset(MECHANISM.HOME))
+                                                .withTimeout(5)
+                                                .beforeStarting(Commands.runOnce(drive::resetEncoders)),
 
-        // TODO: add score game piece command
+                                drive.positionDriveCommand(-32, 32)
+                                                // .alongWith(mech.setArmPreset(MECHANISM.LOW))
+                                                .withTimeout(3)
+                                                .beforeStarting(Commands.runOnce(drive::resetEncoders)));
+        }
 
-        drive.positionDriveCommand(0, 0).alongWith(mech.setArmPreset(MECHANISM.DEFAULT))
-            .until(() -> timer.advanceIfElapsed(5)))
-        .beforeStarting(timer::restart).andThen(timer::stop);
-  }
+        /**
+         * A simple auto routine that drives backward a specified distance, and then
+         * stops.
+         */
+        public static Command scoreCubeMid(Drivetrain drive, Mechanism mech) {
+                return Commands.sequence(
+                                mech.setArmPreset(MECHANISM.MID)
+                                                .withTimeout(1),
 
-  /**
-   * A highly sophisticated auto routine that places a cone on the middle peg,
-   * drives back, turns around, grabs another cone, and then drives
-   * to the charging station and balances.
-   */
-  public static Command scoreAndBalance(Drivetrain drive) {
-    return Commands.sequence(
-        // Drive onto the charging station
-        drive.positionDriveCommand(0, 0)
-            .beforeStarting(drive::resetEncoders),
+                                mech.launchGamePiece()
+                                                .withTimeout(1),
 
-        // Balance the robot
-        drive.balance());
-  }
+                                drive.positionDriveCommand(-140, -140)
+                                                .alongWith(mech.setArmPreset(MECHANISM.HOME))
+                                                .withTimeout(5)
+                                                .beforeStarting(Commands.runOnce(drive::resetEncoders)));
+        }
 
-  /**
-   * An Incomprehnsible level autonomous routine that smoothly controls a
-   * differential drive robot using path planning and trajectories
-   * 
-   * @return Autonomous command
-   */
-  public static Command trajectoryAuto(Drivetrain drive) {
+        /**
+         * A simple auto routine that drives backward a specified distance, and then
+         * stops.
+         */
+        public static Command scoreCubeHigh(Drivetrain drive, Mechanism mech) {
+                return Commands.sequence(
+                                mech.setArmPreset(MECHANISM.HIGH)
+                                                .withTimeout(2),
 
-    // An example trajectory to follow. All units in meters.
-    Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
-        // Start at the origin facing the +X direction
-        new Pose2d(0, 0, new Rotation2d(0)),
-        // Pass through these two interior waypoints, making an 's' curve path
-        List.of(new Translation2d(1, 1), new Translation2d(2, -1)),
-        // End 3 meters straight ahead of where we started, facing forward
-        new Pose2d(3, 0, new Rotation2d(0)),
-        // Pass config
-        new TrajectoryConfig(
-            PATHING.MAX_SPEED,
-            PATHING.MAX_ACCEL)
-            // Add kinematics to ensure max speed is actually obeyed
-            .setKinematics(PATHING.DRIVE_KINEMATICS)
-            // Apply the voltage constraint
-            .addConstraint(new DifferentialDriveVoltageConstraint(
-                new SimpleMotorFeedforward(
-                    PATHING.kS,
-                    PATHING.kV,
-                    PATHING.kA),
-                PATHING.DRIVE_KINEMATICS,
-                10)));
+                                mech.launchGamePiece()
+                                                .withTimeout(1),
 
-    RamseteCommand ramseteCommand = new RamseteCommand(
-        exampleTrajectory,
-        drive::getPose,
-        new RamseteController(PATHING.RAMSETE_B, PATHING.RAMSETE_ZETA),
-        new SimpleMotorFeedforward(
-            PATHING.kS,
-            PATHING.kV,
-            PATHING.kA),
-        PATHING.DRIVE_KINEMATICS,
-        drive::getWheelSpeeds,
-        new PIDController(PATHING.kP, 0, 0),
-        new PIDController(PATHING.kP, 0, 0),
-        // RamseteCommand passes volts to the callback
-        drive::setVoltageOutput,
-        drive);
+                                drive.positionDriveCommand(-140, -140)
+                                                .alongWith(mech.setArmPreset(MECHANISM.HOME))
+                                                .withTimeout(5)
+                                                .beforeStarting(Commands.runOnce(drive::resetEncoders)));
+        }
 
-    // Reset odometry to the starting pose of the trajectory.
-    drive.resetOdometry(exampleTrajectory.getInitialPose());
+        /**
+         * A highly sophisticated auto routine that places a gamepiece in the hybrid
+         * zone,
+         * drives back, and then drives to the charging station and balances.
+         */
+        public static Command scoreAndBalance(Drivetrain drive, Mechanism mech) {
+                return Commands.sequence(
+                                mech.setArmPreset(MECHANISM.STOWED)
+                                                .withTimeout(1),
 
-    // Run path following command, then stop at the end.
-    return ramseteCommand.andThen(drive.emergencyStop());
-  }
+                                mech.releaseGamePiece()
+                                                .withTimeout(1),
 
-  /**
-   * Assuming this method is part of a drivetrain subsystem that provides the
-   * necessary methods
-   */
-  public static Command followTrajectoryCommand(Drivetrain drive, PathPlannerTrajectory traj, boolean isFirstPath) {
-    return Commands.sequence(
-        new InstantCommand(() -> {
-          // Reset odometry for the first path you run during auto
-          if (isFirstPath) {
-            drive.resetOdometry(traj.getInitialPose());
-          }
-        }),
-        new PPRamseteCommand(
-            traj,
-            drive::getPose, // Pose supplier
-            new RamseteController(
-                PATHING.RAMSETE_B,
-                PATHING.RAMSETE_ZETA),
-            new SimpleMotorFeedforward(
-                PATHING.kS,
-                PATHING.kV,
-                PATHING.kA),
-            PATHING.DRIVE_KINEMATICS, // DifferentialDriveKinematics
-            drive::getWheelSpeeds, // DifferentialDriveWheelSpeeds supplier
-            new PIDController(PATHING.kP, 0, 0), // Left controller. Tune these values for your robot. Leaving them 0
-                                                 // will only
-            // use feedforwards.
-            new PIDController(PATHING.kP, 0, 0), // Right controller (usually the same values as left controller)
-            drive::setVoltageOutput, // Voltage biconsumer
-            true, // Should the path be automatically mirrored depending on alliance color.
-                  // Optional, defaults to true
-            drive // Requires this drive subsystem
-        ));
-  }
+                                // Drive onto the charging station
+                                drive.positionDriveCommand(-96, -96)
+                                                .alongWith(mech.setArmPreset(MECHANISM.HOME))
+                                                .withTimeout(6),
 
-  private Autos() {
-    throw new UnsupportedOperationException("This is a utility class!");
-  }
+                                // Balance the robot
+                                drive.balance())
+                                .beforeStarting(Commands.runOnce(drive::resetEncoders));
+        }
+
+        /**
+         * A highly sophisticated auto routine that places a gamepiece in the hybrid
+         * zone,
+         * drives back, and then drives to the charging station and balances.
+         */
+        public static Command scoreMidAndBalance(Drivetrain drive, Mechanism mech) {
+                return Commands.sequence(
+                                mech.setArmPreset(MECHANISM.MID)
+                                                .withTimeout(1),
+
+                                mech.releaseGamePiece()
+                                                .withTimeout(1),
+
+                                // Drive onto the charging station
+                                drive.positionDriveCommand(-84, -84)
+                                                .alongWith(mech.setArmPreset(MECHANISM.HOME))
+                                                .withTimeout(6),
+
+                                // Balance the robot
+                                drive.balance())
+                                .beforeStarting(Commands.runOnce(drive::resetEncoders));
+        }
+
+        /**
+         * A highly sophisticated auto routine that places a gamepiece in the hybrid
+         * zone,
+         * drives back, and then drives to the charging station and balances.
+         */
+        public static Command scoreHighAndBalance(Drivetrain drive, Mechanism mech) {
+                return Commands.sequence(
+                                mech.setArmPreset(MECHANISM.HIGH)
+                                                .withTimeout(2),
+
+                                mech.launchGamePiece()
+                                                .withTimeout(1),
+
+                                drive.positionDriveCommand(-81, -81)
+                                                .alongWith(mech.setArmPreset(MECHANISM.HOME))
+                                                .withTimeout(5)
+                                                .beforeStarting(Commands.runOnce(drive::resetEncoders)),
+
+                                drive.balance());
+        }
+
+        /**
+         * A highly sophisticated auto routine that places a gamepiece in the hybrid
+         * zone,
+         * drives back, and then drives to the charging station and balances.
+         */
+        public static Command mobilityAndBalance(Drivetrain drive, Mechanism mech) {
+                return Commands.sequence(
+                                mech.setArmPreset(MECHANISM.STOWED)
+                                                .withTimeout(1),
+
+                                mech.launchGamePiece()
+                                                .withTimeout(1),
+
+                                // Drive onto the charging station
+                                drive.positionDriveCommand(-160, -160)
+                                                .alongWith(mech.setArmPreset(MECHANISM.HOME))
+                                                .withTimeout(7),
+
+                                // Drive to gyro heading
+                                drive.turnToGyro(0)
+                                                .withTimeout(2),
+
+                                // Drive onto the charging station
+                                drive.positionDriveCommand(90, 90)
+                                                .beforeStarting(Commands.runOnce(drive::resetEncoders))
+                                                .withTimeout(2),
+
+                                // Balance the robot
+                                drive.balance())
+                                .beforeStarting(Commands.runOnce(drive::resetEncoders))
+                                .beforeStarting(Commands.runOnce(drive::resetGyro));
+        }
+
+        /**
+         * A highly sophisticated auto routine that places a cone on the middle peg
+         * autonomously, this is for driver use during teleop.
+         */
+        public static Command automatedScoringCommand(Drivetrain drive, Mechanism mech) {
+                return Commands.sequence(
+                                drive.seekTarget().withTimeout(0.75),
+
+                                drive.goToTarget(),
+
+                                drive.seekTarget().withTimeout(0.75),
+
+                                mech.setArmPreset(MECHANISM.MID).withTimeout(1.6),
+
+                                mech.releaseGamePiece().withTimeout(0.5),
+
+                                mech.setArmPreset(MECHANISM.HOME));
+        }
+
+        /**
+         * An incomrehnsibly sophisticated auto routine that places a cube on the tope
+         * platform, drives back onto and beyond the charging station, and then drives
+         * back to charging station and balances.
+         */
+        public static Command superAuto(Drivetrain drive, Mechanism mech) {
+                return Commands.sequence(
+                                mech.setArmPreset(MECHANISM.STOWED)
+                                                .withTimeout(1),
+
+                                mech.releaseGamePiece()
+                                                .withTimeout(1),
+
+                                // Drive onto the charging station
+                                drive.positionDriveCommand(-170, -170)
+                                                .alongWith(mech.setArmPreset(MECHANISM.HOME))
+                                                .withTimeout(7),
+
+                                // Drive to gyro heading
+                                drive.turnToGyro(0)
+                                                .withTimeout(2),
+
+                                // Drive onto the charging station
+                                drive.positionDriveCommand(90, 90)
+                                                .beforeStarting(Commands.runOnce(drive::resetEncoders))
+                                                .withTimeout(2),
+
+                                // Balance the robot
+                                drive.balance())
+                                .beforeStarting(Commands.runOnce(drive::resetEncoders))
+                                .beforeStarting(Commands.runOnce(drive::resetGyro));
+        }
+
+        private Autos() {
+                throw new UnsupportedOperationException("This is a utility class!");
+        }
 }

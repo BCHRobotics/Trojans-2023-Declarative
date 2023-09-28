@@ -10,8 +10,6 @@ import frc.robot.Constants.MISC;
 import frc.robot.util.control.ArmPresets;
 import frc.robot.util.control.SparkMaxPID;
 
-import java.util.function.BooleanSupplier;
-
 // Import required libraries
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.SparkMaxAbsoluteEncoder;
@@ -54,11 +52,14 @@ public class Mechanism extends SubsystemBase {
 
     this.shoulderMotor.setSmartCurrentLimit(60, 20);
     this.wristMotor.setSmartCurrentLimit(60, 20);
-    this.wristMotor.setSmartCurrentLimit(5, 5);
+    this.clawMotor.setSmartCurrentLimit(40, 20);
 
     this.shoulderMotor.setInverted(false);
     this.wristMotor.setInverted(false);
     this.clawMotor.setInverted(true);
+
+    this.clawMotor.setOpenLoopRampRate(0.1);
+    this.clawMotor.enableVoltageCompensation(12);
 
     this.shoulderEncoder = this.shoulderMotor.getAbsoluteEncoder(Type.kDutyCycle);
     this.wristEncoder = this.wristMotor.getAbsoluteEncoder(Type.kDutyCycle);
@@ -87,8 +88,6 @@ public class Mechanism extends SubsystemBase {
     this.shoulderController = new SparkMaxPID(this.shoulderMotor, MECHANISM.SHOULDER_CONTROL_CONSTANTS);
     this.wristController = new SparkMaxPID(this.wristMotor, MECHANISM.WRIST_CONTROL_CONSTANTS);
 
-    // this.wristController.pushConstantsToDashboard("Wrist");
-
     this.shoulderController.setFeedbackDevice(shoulderEncoder);
     this.wristController.setFeedbackDevice(wristEncoder);
 
@@ -96,7 +95,7 @@ public class Mechanism extends SubsystemBase {
     this.wristController.setPIDWrapping(false);
 
     this.shoulderController.setMotionProfileType(AccelStrategy.kSCurve);
-    this.wristController.setMotionProfileType(AccelStrategy.kSCurve);
+    this.wristController.setMotionProfileType(AccelStrategy.kTrapezoidal);
 
     this.coneLED = new DigitalOutput(MISC.CONE_LED_PORT);
     this.cubeLED = new DigitalOutput(MISC.CUBE_LED_PORT);
@@ -116,6 +115,7 @@ public class Mechanism extends SubsystemBase {
           Math.acos((MECHANISM.SHOULDER_HEIGHT - MECHANISM.WRIST_HEIGHT_OFFSET - preset.wristHeight)
               / MECHANISM.ARM_LENGTH))
           + MECHANISM.WRIST_PARALLEL_OFFSET + preset.wristOffset);
+      SmartDashboard.putString("Arm Preset", preset.name);
     }).withName("setArmPreset");
   }
 
@@ -140,14 +140,7 @@ public class Mechanism extends SubsystemBase {
    * @param angle
    */
   private void setWristAngle(double angle) {
-    this.wristController.setSmartPosition(angle, MECHANISM.WRIST_DEFAULT_OFFSET,
-        this.getShoulderPosition() < MECHANISM.SHOUDLER_MAX_EXTENSION_LIMIT
-            ? ((this.shoulderEncoder.getPosition() - MECHANISM.SHOULDER_DEFAULT_OFFSET)
-                / (MECHANISM.SHOUDLER_MAX_EXTENSION_LIMIT - MECHANISM.SHOULDER_DEFAULT_OFFSET)
-                * (MECHANISM.WRIST_LIMIT - MECHANISM.WRIST_PARALLEL_OFFSET)
-                + MECHANISM.WRIST_PARALLEL_OFFSET + MECHANISM.WRIST_DEFAULT_OFFSET)
-            : MECHANISM.WRIST_LIMIT);
-    // TODO: Remember to add dynamic offset, don't hit ground!!!
+    this.wristController.setSmartPosition(angle, MECHANISM.WRIST_DEFAULT_OFFSET, MECHANISM.WRIST_LIMIT);
   }
 
   /**
@@ -155,21 +148,68 @@ public class Mechanism extends SubsystemBase {
    * 
    * @return "Grab Game-Piece" Command
    */
-  public Command grabGamePiece(BooleanSupplier kill) {
-    return runEnd(() -> this.setClawSpeed(0.5), () -> this.setClawSpeed(0))
-        .until(kill::getAsBoolean);
+  public Command grabCube() {
+    return startEnd(() -> this.setClawSpeed(0.4), () -> this.setClawSpeed(0.02))
+        .until(() -> this.gamePieceDetected(MISC.CUBE_DETECTION_CURRENT))
+        .andThen(
+            () -> SmartDashboard.putBoolean("Game Piece", true));
   }
 
   /**
-   * Runs intake claw to release game piece, waits 2 seconds then stops the motor
+   * Runs intake claw to collect game piece until reached proximity
+   * 
+   * @return "Grab Game-Piece" Command
+   */
+  public Command grabCone() {
+    return startEnd(() -> this.setClawSpeed(0.7), () -> this.setClawSpeed(0.02))
+        .until(() -> this.gamePieceDetected(MISC.CONE_DETECTION_CURRENT))
+        .andThen(
+            () -> SmartDashboard.putBoolean("Game Piece", true));
+  }
+
+  /**
+   * Returns whether or not a game piece was detected
+   */
+  private boolean gamePieceDetected(double currentLimit) {
+    return this.clawMotor.getOutputCurrent() >= currentLimit;
+  }
+
+  /**
+   * Runs intake claw to release game piece, waits 0.8 seconds then stops the
+   * motor
    * 
    * @return "Release Game-Piece" Command
    */
   public Command releaseGamePiece() {
-    return Commands.sequence(
-        runOnce(() -> this.setClawSpeed(-1)),
-        new WaitCommand(0.8),
-        runOnce(() -> this.setClawSpeed(0)));
+    return startEnd(
+        () -> this.setClawSpeed(-0.35),
+        () -> this.setClawSpeed(0))
+        .withTimeout(0.8)
+        .beforeStarting(() -> SmartDashboard.putBoolean("Game Piece", false));
+  }
+
+  /**
+   * Runs intake claw to launch game piece, waits 0.6 seconds then stops the
+   * motor
+   * 
+   * @return "Launch Game-Piece" Command
+   */
+  public Command launchGamePiece() {
+    return startEnd(
+        () -> this.setClawSpeed(-1),
+        () -> this.setClawSpeed(0))
+        .withTimeout(0.8)
+        .beforeStarting(() -> SmartDashboard.putBoolean("Game Piece", false));
+  }
+
+  /**
+   * Disables intake claw motor
+   * 
+   * @return
+   */
+  public Command disableClaw() {
+    return runOnce(this.clawMotor::disable)
+        .beforeStarting(() -> SmartDashboard.putBoolean("Game Piece", false));
   }
 
   /**
@@ -179,18 +219,22 @@ public class Mechanism extends SubsystemBase {
     this.clawMotor.set(speed);
   }
 
+  public void shutDown() {
+    this.setClawSpeed(0);
+  }
+
   /**
    * Blinks the Cone LED
    * 
    * @return "Blink Cone LED" Command
    */
   public Command blinkConeLED() {
-    return Commands.repeatingSequence(
+    return Commands.sequence(
         this.setConeLED(true),
         new WaitCommand(MISC.BLINK_INTERVAL),
         this.setConeLED(false),
         new WaitCommand(MISC.BLINK_INTERVAL))
-        .andThen(this.setConeLED(false));
+        .repeatedly();
   }
 
   /**
@@ -199,12 +243,12 @@ public class Mechanism extends SubsystemBase {
    * @return "Blink Cube LED" Command
    */
   public Command blinkCubeLED() {
-    return Commands.repeatingSequence(
+    return Commands.sequence(
         this.setCubeLED(true),
         new WaitCommand(MISC.BLINK_INTERVAL),
         this.setCubeLED(false),
         new WaitCommand(MISC.BLINK_INTERVAL))
-        .andThen(this.setCubeLED(false));
+        .repeatedly();
   }
 
   /**
@@ -213,7 +257,6 @@ public class Mechanism extends SubsystemBase {
    * @return "Toggle Cone LED" Command
    */
   public Command setConeLED(boolean state) {
-    SmartDashboard.putBoolean("Cone Request", state);
     return runOnce(() -> this.coneLED.set(state));
   }
 
@@ -223,7 +266,6 @@ public class Mechanism extends SubsystemBase {
    * @return "Toggle Cube LED" Command
    */
   public Command setCubeLED(boolean state) {
-    SmartDashboard.putBoolean("Cube Request", state);
     return runOnce(() -> this.cubeLED.set(state));
   }
 
@@ -248,7 +290,8 @@ public class Mechanism extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-    // SmartDashboard.putNumber("Game Piece", this.sensor.getProximity());
-    // this.wristController.retrieveDashboardConstants();
+
+    SmartDashboard.putBoolean("Cube Request", this.cubeLED.get());
+    SmartDashboard.putBoolean("Cone Request", this.coneLED.get());
   }
 }

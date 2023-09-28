@@ -3,7 +3,6 @@ package frc.robot.util.devices;
 import frc.robot.Constants.MISC;
 import frc.robot.Constants.VISION;
 import frc.robot.Constants.VISION.TARGET_TYPE;
-
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
@@ -28,21 +27,21 @@ public class Limelight {
     public void setDesiredTarget(TARGET_TYPE target) {
         this.currentTarget = target;
         switch (target) {
-            case CONE:
-                this.targetHeight = VISION.CONE_TARGET_HEIGHT;
-                this.setPipeline(VISION.CONE_PIPELINE);
-                break;
-            case CUBE:
-                this.targetHeight = VISION.CUBE_TARGET_HEIGHT;
-                this.setPipeline(VISION.CUBE_PIPELINE);
+            case REFLECTIVE_TAPE:
+                this.targetHeight = VISION.REFLECTIVE_TAPE_HEIGHT;
+                this.setPipeline(VISION.REFLECTIVE_PIPLINE);
                 break;
             case APRILTAG:
                 this.targetHeight = VISION.APRILTAG_HEIGHT;
                 this.setPipeline(VISION.APRILTAG_PIPELINE);
                 break;
-            case GAMEPIECE:
-                this.targetHeight = 0;
-                this.setPipeline(VISION.NEURAL_NETWORK_PIPELINE);
+            case CONE:
+                this.targetHeight = VISION.CONE_HEIGHT;
+                this.setPipeline(VISION.CONE_PIPELINE);
+                break;
+            case CUBE:
+                this.targetHeight = VISION.CUBE_HEIGHT;
+                this.setPipeline(VISION.CUBE_PIPELINE);
                 break;
             default:
                 this.targetHeight = 0;
@@ -89,10 +88,11 @@ public class Limelight {
      * @return distance to target
      */
     public double getTargetDistance() {
-        return Math.abs(Math.round(
-                VISION.LIMELIGHT_HEIGHT - this.targetHeight / Math.tan(
-                        Math.toRadians(VISION.LIMELIGHT_ANGLE + Math.abs(this.getTargetY()))) * 100.0)
-                / 100.0); // distance from target in inches
+        return Math.abs(
+                Math.round(
+                        (Math.abs(VISION.LIMELIGHT_HEIGHT - this.targetHeight) /
+                                Math.tan(VISION.LIMELIGHT_ANGLE - this.getTargetY())) * 10)
+                        / 10); // distance from target in inches
     }
 
     /**
@@ -101,6 +101,6 @@ public class Limelight {
      * @return reached target
      */
     public boolean reachedTargetX() {
-        return (MISC.WITHIN_TOLERANCE(getTargetX(), VISION.LIMELIGHT_TOLERANCE));
+        return (MISC.WITHIN_TOLERANCE(this.getTargetX(), 0, VISION.LIMELIGHT_TOLERANCE));
     }
 }
